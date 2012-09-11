@@ -1,11 +1,28 @@
 from aqt import mw
 from aqt.qt import *
+from anki.hooks import addHook
 # my stuff
-import selector
-import utils
+import selector, utils
+
+from time import gmtime, strftime
+
+PREFIX = '##SuperStyler'
+
+def cleanUp():
+    print "Cleaning up SuperStyler junk..."
+    decks_to_delete = []
+    for deck in mw.col.decks.all():
+        if deck['name'].startswith(PREFIX):
+            decks_to_delete.append(deck)
+    for deck in decks_to_delete:
+        print "Deleting leftover deck: " + deck['name']
+        mw.col.decks.rem(deck['id'])
+    mw.reset() #update UI
+        
 
 def ssLaunch():
-    ss = SelectStyle(mw)
+    SelectStyle(mw)
+
 
 # create a new menu item
 action = QAction("Super Styler", mw)
@@ -14,6 +31,9 @@ mw.connect(action, SIGNAL("triggered()"), ssLaunch)
 # and add it to the tools menu
 mw.form.menuTools.addAction(action)
 
+# On collection load, clean up junk we might have left over in the collection 
+# in the event of improperly closing the application.
+addHook("profileLoaded", cleanUp)
 
 class SelectStyle(QDialog):
 
@@ -66,7 +86,7 @@ class SelectStyle(QDialog):
                 break
 
     # Start was clicked! We now need to do six things:
-    # 1 - Grab the template and CSS data 
+    # *1 - Grab the template and CSS data
     # 2 - Start a small web server to serve that data
     # 3 - Create a new template to mess around with
     # 4 - Inject our magic javascript into the new template with our web server's
@@ -79,3 +99,11 @@ class SelectStyle(QDialog):
         css = self.current_model['css']
         tmpl_q = self.current_tmpl['qfmt']
         tmpl_a = self.current_tmpl['afmt']
+        #model_copy = self.mw.col.models.copy(self.current_model)
+        dynDeckName = PREFIX + "-" + strftime("%Y-%m-%d %H:%M:%S", gmtime())
+        self.mw.col.decks.newDyn(dynDeckName)
+        #self.mw.col.models.add(superStylerModel)
+        self.mw.onSync()
+        self.mw.reset() #update UI
+
+
