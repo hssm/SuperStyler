@@ -17,6 +17,17 @@ def cleanUp():
     for deck in decks_to_delete:
         print "Deleting leftover deck: " + deck['name']
         mw.col.decks.rem(deck['id'])
+    
+    tmpls_to_delete = []
+    for model in mw.col.models.all():
+        for tmpl in model['tmpls']:
+            if tmpl['name'].startswith(PREFIX):
+                tmpls_to_delete.append((model, tmpl))
+
+    for (model, tmpl) in tmpls_to_delete:
+        print "Deleting leftover tmpl: " + tmpl['name'] + " -- from model: " + model['name']
+        mw.col.models.remTemplate(model, tmpl)
+            
     mw.reset() #update UI
         
 
@@ -95,15 +106,37 @@ class SelectStyle(QDialog):
     # 6 - Sync the deck so it's available everywhere
     
     def onBtnStart(self):
-        print "On Btn STart"       
+        print "On Btn Start"
+        
         css = self.current_model['css']
         tmpl_q = self.current_tmpl['qfmt']
         tmpl_a = self.current_tmpl['afmt']
-        #model_copy = self.mw.col.models.copy(self.current_model)
-        dynDeckName = PREFIX + "-" + strftime("%Y-%m-%d %H:%M:%S", gmtime())
-        self.mw.col.decks.newDyn(dynDeckName)
+        
+
+        # Create the template that we will inject javascript into
+        cardName = PREFIX + "-tmpl-" + strftime("%Y%m%d%H%M%S", gmtime())
+        new_tmpl = self.mw.col.models.newTemplate(cardName) #this also sets it as the current model
+        new_tmpl['qfmt'] = '{{Sentence-English}}'
+        new_tmpl['afmt'] = '{{Sentence-English}}'
+        
+        # Add it to the model we selected
+        self.mw.col.models.addTemplate(self.current_model, new_tmpl)
+        self.mw.col.models.save(self.current_model, True)
+
+        # Create a dynamic deck. This also sets it as the current deck
+        deckName = PREFIX + "-deck-" + strftime("%Y%m%d%H%M%S", gmtime())
+        dynDeckId = self.mw.col.decks.newDyn(deckName)
+        dynDeck = self.mw.col.decks.get(dynDeckId)
+        searchStr = "card:'%s'" % (cardName)
+        dynDeck['delays'] = None
+        dynDeck['terms'][0] =  [searchStr, 100, 0] #search, limit, current
+        dynDeck['resched'] = True
+        self.mw.col.decks.save(dynDeck)
+        self.mw.col.sched.rebuildDyn(dynDeckId)
+        
+        
         #self.mw.col.models.add(superStylerModel)
-        self.mw.onSync()
+        #self.mw.onSync()
         self.mw.reset() #update UI
 
 
