@@ -1,12 +1,7 @@
 import BaseHTTPServer
 
 class UpdatingTemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-  
-    def __init__(self, (host, port), server, filePath):
-        self.__init__(self, (host, port), server)
-        self.useFile = True
-        self.filePath = filePath
-  
+     
     def do_HEAD(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
@@ -55,8 +50,9 @@ class UpdatingTemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 """
 
 if __name__ == '__main__':
-    server = BaseHTTPServer.HTTPServer
-    httpd = server(("0.0.0.0", 8000), UpdatingTemplateHandler)
+    print "Starting server on port 9999...",
+    httpd = BaseHTTPServer.HTTPServer(("0.0.0.0", 9999), UpdatingTemplateHandler)
+    print "Started."
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:

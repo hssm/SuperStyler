@@ -68,7 +68,7 @@ class SelectStyle(QDialog):
 
         # Select first item as a default
         self.form.comboModelSelect.setCurrentIndex(0)
-
+        
         # Start UI (show it)
         self.exec_()
 
@@ -99,25 +99,28 @@ class SelectStyle(QDialog):
     # Start was clicked! We now need to do six things:
     # *1 - Grab the template and CSS data
     # 2 - Start a small web server to serve that data
-    # 3 - Create a new template to mess around with
+    # *3 - Create a new template to mess around with
     # 4 - Inject our magic javascript into the new template with our web server's
     #     IP address
     # 5 - Create a cram deck with that new template.
     # 6 - Sync the deck so it's available everywhere
     
-    def onBtnStart(self):
-        print "On Btn Start"
-        
+    def onBtnStart(self):      
         css = self.current_model['css']
         tmpl_q = self.current_tmpl['qfmt']
         tmpl_a = self.current_tmpl['afmt']
         
-
+        # Read our script into memory
+        scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
+        script = open(scriptPath, 'r').read()
+        # update the script with our machine's local network IP
+        script = script.replace('##AddressGoesHere##', utils.get_lan_ip())
+        
         # Create the template that we will inject javascript into
         cardName = PREFIX + "-tmpl-" + strftime("%Y%m%d%H%M%S", gmtime())
         new_tmpl = self.mw.col.models.newTemplate(cardName) #this also sets it as the current model
-        new_tmpl['qfmt'] = '{{Sentence-English}}'
-        new_tmpl['afmt'] = '{{Sentence-English}}'
+        new_tmpl['qfmt'] = script + tmpl_q
+        new_tmpl['afmt'] = script + tmpl_a
         
         # Add it to the model we selected
         self.mw.col.models.addTemplate(self.current_model, new_tmpl)
@@ -134,9 +137,7 @@ class SelectStyle(QDialog):
         self.mw.col.decks.save(dynDeck)
         self.mw.col.sched.rebuildDyn(dynDeckId)
         
-        
-        #self.mw.col.models.add(superStylerModel)
-        #self.mw.onSync()
+        self.mw.onSync()
         self.mw.reset() #update UI
 
 
