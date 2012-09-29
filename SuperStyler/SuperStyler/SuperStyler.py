@@ -27,8 +27,6 @@ def cleanUp():
     for (model, tmpl) in tmpls_to_delete:
         print "Deleting leftover tmpl: " + tmpl['name'] + " -- from model: " + model['name']
         mw.col.models.remTemplate(model, tmpl)
-            
-    mw.reset() #update UI
         
 
 def ssLaunch():
