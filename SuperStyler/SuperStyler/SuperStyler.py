@@ -2,13 +2,16 @@ from time import gmtime, strftime
 
 from aqt import mw
 from aqt.qt import *
-from anki.hooks import addHook
+from anki.hooks import addHook, wrap
+from aqt.clayout import CardLayout
 
 import selector, utils
-from templateserver import TemplateHandler, TemplateServer
 import templateserver
 
 PREFIX = '##SuperStyler'
+
+# We keep only one server instance
+_tmpl_server = None
 
 def cleanUp():
     print "Cleaning up SuperStyler junk..."
@@ -99,30 +102,43 @@ class SelectStyle(QDialog):
 
     # Start was clicked! We now need to do six things:
     # *1 - Grab the template and CSS data
-    # 2 - Start a small web server to serve that data
+    # *2 - Start a small web server to serve that data
     # *3 - Create a new template to mess around with
-    # 4 - Inject our magic javascript into the new template with our web server's
-    #     IP address
-    # 5 - Create a cram deck with that new template.
+    # *4 - Inject our magic javascript into the new template
+    #      with our web server's IP address
+    # 5 - Create a dynamic deck with that new template.
     # 6 - Sync the deck so it's available everywhere
     
-    def onBtnStart(self):      
+    def onBtnStart(self):
+        global _tmpl_server
+        
         css = self.current_model['css']
         tmpl_q = self.current_tmpl['qfmt']
         tmpl_a = self.current_tmpl['afmt']
         
+        # Close any lingering servers
+        if _tmpl_server is not None:
+            templateserver.stop_server(_tmpl_server)
+        
+        # Start a new template server on a free port
+        port = utils.get_free_port()
+        _tmpl_server = templateserver.start_new_server("0.0.0.0", port)
+        
         # Read our script into memory
         scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
         script = open(scriptPath, 'r').read()
-        # update the script with our machine's local network IP
-        script = script.replace('##AddressGoesHere##', utils.get_lan_ip())
+        
+        # Update the script with our machine's local network IP and port
+        url = str(utils.get_lan_ip()) + ':' + str(port)
+        script = script.replace('##AddressGoesHere##', url)
         
         # Create the template that we will inject javascript into
         cardName = PREFIX + "-tmpl-" + strftime("%Y%m%d%H%M%S", gmtime())
-        new_tmpl = self.mw.col.models.newTemplate(cardName) #this also sets it as the current model
+        new_tmpl = self.mw.col.models.newTemplate(cardName)
         new_tmpl['qfmt'] = script + tmpl_q
         new_tmpl['afmt'] = script + tmpl_a
         
+       
         # Add it to the model we selected
         self.mw.col.models.addTemplate(self.current_model, new_tmpl)
         self.mw.col.models.save(self.current_model, True)
@@ -138,9 +154,7 @@ class SelectStyle(QDialog):
         self.mw.col.decks.save(dynDeck)
         self.mw.col.sched.rebuildDyn(dynDeckId)
         
-        # TODO: find next open port instead of hardcoding this one
-        ts = templateserver.start_new_server("0.0.0.0", 9998)
-        ts.set_CSS(css)
+        _tmpl_server.set_CSS(css)
         
         #self.mw.onSync()
         self.mw.reset() #update UI
