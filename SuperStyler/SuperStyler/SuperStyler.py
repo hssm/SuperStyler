@@ -1,10 +1,12 @@
+from time import gmtime, strftime
+
 from aqt import mw
 from aqt.qt import *
 from anki.hooks import addHook
-# my stuff
-import selector, utils
 
-from time import gmtime, strftime
+import selector, utils
+from templateserver import TemplateHandler, TemplateServer
+import templateserver
 
 PREFIX = '##SuperStyler'
 
@@ -28,6 +30,7 @@ def cleanUp():
         print "Deleting leftover tmpl: " + tmpl['name'] + " -- from model: " + model['name']
         mw.col.models.remTemplate(model, tmpl)
         
+    mw.reset() #update UI
 
 def ssLaunch():
     SelectStyle(mw)
@@ -135,7 +138,10 @@ class SelectStyle(QDialog):
         self.mw.col.decks.save(dynDeck)
         self.mw.col.sched.rebuildDyn(dynDeckId)
         
-        self.mw.onSync()
+        # TODO: find next open port instead of hardcoding this one
+        ts = templateserver.start_new_server("0.0.0.0", 9998)
+        ts.set_CSS(css)
+        
+        #self.mw.onSync()
         self.mw.reset() #update UI
-
-
+        

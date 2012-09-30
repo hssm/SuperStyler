@@ -15,7 +15,7 @@
     ss.id = "updatingCss";
     ss.type = "text/css";
     ss.rel = "stylesheet";
-    ss.href = "http://##AddressGoesHere##:9999/style.css?"+Date.now();
+    ss.href = "http://##AddressGoesHere##:9998/style.css?"+Date.now();
     document.body.appendChild(ss);
 
     // Cheap hack to avoid flickering. Delete the old style a little while after the old one has finished.

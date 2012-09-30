@@ -2,6 +2,7 @@
 # http://www.mlsite.net/blog/?p=80
 
 import BaseHTTPServer
+import threading
 
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -10,7 +11,11 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.question_template = None
         self.answer_template = None
         self.stylesheet = None
-        
+
+    def log_message(self, format, *args):
+        """Turn off logging since anki shows these as errors."""
+        return
+
     def do_HEAD_CSS(self):
         self.send_response(200)
         self.send_header("Content-type", "text/css")
@@ -58,8 +63,11 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class TemplateServer(BaseHTTPServer.HTTPServer):
     
     def __init__(self, server_address, RequestHandlerClass):
-        BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)
-
+        BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)       
+        self.RequestHandlerClass.question_template = None
+        self.RequestHandlerClass.answer_template = None
+        self.RequestHandlerClass.stylesheet = None
+        
     def set_CSS(self, css_text):
         self.RequestHandlerClass.stylesheet = css_text
     
@@ -68,6 +76,18 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
     
     def set_answer(self, answer):
         self.RequestHandlerClass.answer_template = answer
+
+
+def start_new_server(ip, port):
+    ts = TemplateServer((ip, port), TemplateHandler)
+    name = "SuperStyler template server"
+    t = threading.Thread(target=ts.serve_forever, name=name)
+    t.daemon = True
+    t.start()
+    return ts
+
+def stop_server(server):
+    server.shutdown()
 
 if __name__ == '__main__':
     
@@ -88,7 +108,7 @@ if __name__ == '__main__':
 }
 """   
     ts.set_question("This is a question!")
-    ts.set_answer("This is an answer!")
+    #ts.set_answer("This is an answer!")
     ts.set_CSS(css)
     
     try:
