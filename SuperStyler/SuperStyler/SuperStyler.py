@@ -2,10 +2,11 @@ from time import gmtime, strftime
 
 from aqt import mw
 from aqt.qt import *
+from aqt.utils import askUser
 from anki.hooks import addHook, wrap
 from aqt.clayout import CardLayout
 
-import selector, utils
+import utils
 import templateserver
 
 PREFIX = '##SuperStyler'
@@ -35,86 +36,29 @@ def cleanUp():
         
     mw.reset() #update UI
 
-def ssLaunch():
-    SelectStyle(mw)
-
-
-# create a new menu item
-action = QAction("Super Styler", mw)
-# set it to call ssLaunch when it's clicked
-mw.connect(action, SIGNAL("triggered()"), ssLaunch)
-# and add it to the tools menu
-mw.form.menuTools.addAction(action)
 
 # On collection load, clean up junk we might have left over in the collection 
 # in the event of improperly closing the application.
 addHook("profileLoaded", cleanUp)
 
-class SelectStyle(QDialog):
-
-    def __init__(self, mw):
-        # Form setup
-        QDialog.__init__(self, mw)
-        self.mw = mw
-        self.form = selector.Ui_Dialog()
-        self.form.setupUi(self)
-        self.form.btnStart.setDisabled(True)
-
-        # Add events for comboBox selection
-        self.connect(self.form.comboModelSelect, SIGNAL('currentIndexChanged(QString)'), self.onModelSelect)
-        self.connect(self.form.comboTmplSelect, SIGNAL('currentIndexChanged(QString)'), self.onTmplSelect)
-        # Add event for Start button
-        self.connect(self.form.btnStart, SIGNAL('clicked()'), self.onBtnStart)
-                                
-        # Make a combo box of all model names in the collection
-        model_names = [model['name'] for model in mw.col.models.all()]
-        self.form.comboModelSelect.addItems(model_names)
-
-        # Select first item as a default
-        self.form.comboModelSelect.setCurrentIndex(0)
-        
-        # Start UI (show it)
-        self.exec_()
-
-
-    def onModelSelect(self, model_name):
-        print "On Model Select", model_name
-        self.current_model = mw.col.models.byName(model_name)
-        # Make a combo box of all templates (by name) in the chosen model
-        tmpl_names = [tmpl['name'] for tmpl in self.current_model['tmpls']]
-        self.form.comboTmplSelect.clear()
-        self.form.comboTmplSelect.addItems(tmpl_names)
-
-        # Select first item as a default
-        self.form.comboTmplSelect.setCurrentIndex(0)
-        
-        # The first option will be selected by default, so enable the start button
-        self.form.btnStart.setEnabled(True)
-        
-
-    def onTmplSelect(self, tmpl_name):
-        print "On TMPL Select", tmpl_name
-        tmpls = self.current_model['tmpls']
-        for tmpl in tmpls:
-            if tmpl['name'] == tmpl_name:
-                self.current_tmpl = tmpl
-                break
-
-    # Start was clicked! We now need to do six things:
-    # *1 - Grab the template and CSS data
-    # *2 - Start a small web server to serve that data
-    # *3 - Create a new template to mess around with
-    # *4 - Inject our magic javascript into the new template
-    #      with our web server's IP address
-    # 5 - Create a dynamic deck with that new template.
-    # 6 - Sync the deck so it's available everywhere
+class SuperStyler(object):
     
-    def onBtnStart(self):
+    def __init__(self, clayout):
+        self.clayout = clayout
+        accept = askUser("You must do a full upload to use this feature. Are you sure?")
+        if accept:
+            self.doWizardry()
+
+    def doWizardry(self):
         global _tmpl_server
+        mw = self.clayout.mw
+        card = self.clayout.card
+        model = card.model()
+        tmpls = model['tmpls'][card.ord] 
         
-        css = self.current_model['css']
-        tmpl_q = self.current_tmpl['qfmt']
-        tmpl_a = self.current_tmpl['afmt']
+        css = model['css']
+        tmpl_q = tmpls['qfmt']
+        tmpl_a = tmpls['afmt']
         
         # Close any lingering servers
         if _tmpl_server is not None:
@@ -134,28 +78,54 @@ class SelectStyle(QDialog):
         
         # Create the template that we will inject javascript into
         cardName = PREFIX + "-tmpl-" + strftime("%Y%m%d%H%M%S", gmtime())
-        new_tmpl = self.mw.col.models.newTemplate(cardName)
+        new_tmpl = mw.col.models.newTemplate(cardName)
         new_tmpl['qfmt'] = script + tmpl_q
         new_tmpl['afmt'] = script + tmpl_a
         
-       
         # Add it to the model we selected
-        self.mw.col.models.addTemplate(self.current_model, new_tmpl)
-        self.mw.col.models.save(self.current_model, True)
-
+        mw.col.models.addTemplate(model, new_tmpl)
+        mw.col.models.save(model, True)
+        
+        # Redraw the card layout window to show the one we just created.
+        # Also, select it.
+        self.clayout.redraw()
+        self.clayout.selectCard(new_tmpl['ord'])
+        
         # Create a dynamic deck. This also sets it as the current deck
         deckName = PREFIX + "-deck-" + strftime("%Y%m%d%H%M%S", gmtime())
-        dynDeckId = self.mw.col.decks.newDyn(deckName)
-        dynDeck = self.mw.col.decks.get(dynDeckId)
+        dynDeckId = mw.col.decks.newDyn(deckName)
+        dynDeck = mw.col.decks.get(dynDeckId)
         searchStr = "card:'%s'" % (cardName)
         dynDeck['delays'] = None
         dynDeck['terms'][0] =  [searchStr, 100, 0] #search, limit, current
         dynDeck['resched'] = True
-        self.mw.col.decks.save(dynDeck)
-        self.mw.col.sched.rebuildDyn(dynDeckId)
+        mw.col.decks.save(dynDeck)
+        mw.col.sched.rebuildDyn(dynDeckId)
         
-        _tmpl_server.set_CSS(css)
-        
+        _tmpl_server.set_CSS(css)        
         #self.mw.onSync()
-        self.mw.reset() #update UI
         
+        
+def mySetupButtons(self):
+    b = QPushButton("SuperStyler")
+    b.connect(b, SIGNAL("clicked()"), lambda: SuperStyler(self))
+    self.buttons.addWidget(b)
+
+        
+def mySelectCard(self, idx):
+    # I'm going to disable editing the template for now. Only leave CSS
+    # editable. I'll need to figure out a good way to handle the template
+    # some other time.
+    if not hasattr(self, 'tab'):
+        return
+    
+    if self.tabs.tabText(idx).startswith(PREFIX):
+        self.tab['tform'].front.setReadOnly(True)
+        self.tab['tform'].back.setReadOnly(True)
+    else:
+        self.tab['tform'].front.setReadOnly(False)
+        self.tab['tform'].back.setReadOnly(False)
+
+
+CardLayout.selectCard = wrap(CardLayout.selectCard, mySelectCard)
+CardLayout.setupButtons = wrap(CardLayout.setupButtons, mySetupButtons)
