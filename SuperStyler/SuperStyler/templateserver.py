@@ -7,7 +7,10 @@ import threading
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
     def __init__(self, request, client_address, server):
-        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+        try:
+            BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+        except IOError: # We'll gladly ignore broken pipes.
+            return
         self.question_template = None
         self.answer_template = None
         self.stylesheet = None
@@ -19,11 +22,15 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD_CSS(self):
         self.send_response(200)
         self.send_header("Content-type", "text/css")
+        self.send_header('Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
         self.end_headers()
 
     def do_HEAD_HTML(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
+        self.send_header('Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
         self.end_headers()
 
     def do_HEAD_404(self):
@@ -35,7 +42,7 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path == "/style.css":
+        if self.path.startswith("/style.css?"):
             if self.stylesheet is None:
                 self.do_HEAD_500()
                 self.wfile.write("Stylesheet has not been set")

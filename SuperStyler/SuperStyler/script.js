@@ -15,7 +15,9 @@
     ss.id = "updatingCss";
     ss.type = "text/css";
     ss.rel = "stylesheet";
-    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now();
+    // Unfortunately I have to add a random thing on the end because the Android WebView refuses to
+    // not cache the stylesheet.
+    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now(); 
     document.body.appendChild(ss);
 
     // Cheap hack to avoid flickering. Delete the old style a little while after the old one has finished.

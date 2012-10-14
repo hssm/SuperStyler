@@ -40,6 +40,7 @@ def cleanUp():
 # On collection load, clean up junk we might have left over in the collection 
 # in the event of improperly closing the application.
 addHook("profileLoaded", cleanUp)
+   
 
 class SuperStyler(object):
     
@@ -85,12 +86,7 @@ class SuperStyler(object):
         # Add it to the model we selected
         mw.col.models.addTemplate(model, new_tmpl)
         mw.col.models.save(model, True)
-        
-        # Redraw the card layout window to show the one we just created.
-        # Also, select it.
-        self.clayout.redraw()
-        self.clayout.selectCard(new_tmpl['ord'])
-        
+                
         # Create a dynamic deck. This also sets it as the current deck
         deckName = PREFIX + "-deck-" + strftime("%Y%m%d%H%M%S", gmtime())
         dynDeckId = mw.col.decks.newDyn(deckName)
@@ -102,16 +98,24 @@ class SuperStyler(object):
         mw.col.decks.save(dynDeck)
         mw.col.sched.rebuildDyn(dynDeckId)
         
-        _tmpl_server.set_CSS(css)        
-        #self.mw.onSync()
+        # Redraw the card layout window to show the one we just created.
+        # Also, select it.
+        self.clayout.redraw()
+        self.clayout.selectCard(new_tmpl['ord'])
         
+        _tmpl_server.set_CSS(css)
+        # Syncing can't be done with the CardLayout window open.
+        # We close it, do our sync, then open it up again.
+        self.clayout.reject()
+        mw.onSync()
         
+# TODO: I should probably put all this method wrapping inside the SuperStyler class
+# ----------------------------------------------------------------------------------
 def mySetupButtons(self):
     b = QPushButton("SuperStyler")
     b.connect(b, SIGNAL("clicked()"), lambda: SuperStyler(self))
     self.buttons.addWidget(b)
 
-        
 def mySelectCard(self, idx):
     # I'm going to disable editing the template for now. Only leave CSS
     # editable. I'll need to figure out a good way to handle the template
@@ -126,6 +130,18 @@ def mySelectCard(self, idx):
         self.tab['tform'].front.setReadOnly(False)
         self.tab['tform'].back.setReadOnly(False)
 
+def mySaveCard(self):
+    # Only do CSS for now.
+    if _tmpl_server is not None:
+        text = self.tab['tform'].css.toPlainText()
+        _tmpl_server.set_CSS(text)
 
-CardLayout.selectCard = wrap(CardLayout.selectCard, mySelectCard)
+def myReject(self):
+    pass
+    #cleanUp()
+
+ 
 CardLayout.setupButtons = wrap(CardLayout.setupButtons, mySetupButtons)
+CardLayout.selectCard = wrap(CardLayout.selectCard, mySelectCard)
+CardLayout.saveCard = wrap(CardLayout.saveCard, mySaveCard)
+CardLayout.reject = wrap(CardLayout.reject, myReject)
