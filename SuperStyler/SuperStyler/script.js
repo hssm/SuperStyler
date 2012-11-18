@@ -20,7 +20,7 @@
     ss.href = "http://##AddressGoesHere##/style.css?"+Date.now(); 
     document.body.appendChild(ss);
 
-    // Cheap hack to avoid flickering. Delete the old style a little while after the old one has finished.
+    // Cheap hack to avoid flickering. Delete the old style a little while after the new one has finished.
     // I am positive there is a better way to do this.
     setTimeout(function () {
       if (oldStyle) {
