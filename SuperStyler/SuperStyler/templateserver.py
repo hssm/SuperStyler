@@ -69,7 +69,8 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 class TemplateServer(BaseHTTPServer.HTTPServer):
     
-    def __init__(self, server_address, RequestHandlerClass):
+    def __init__(self, server_address, RequestHandlerClass, id):
+        self.id = id
         BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)       
         self.RequestHandlerClass.question_template = None
         self.RequestHandlerClass.answer_template = None
@@ -85,9 +86,9 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
         self.RequestHandlerClass.answer_template = answer
 
 
-def start_new_server(ip, port):
-    ts = TemplateServer((ip, port), TemplateHandler)
-    name = "SuperStyler template server"
+def start_new_server(ip, port, id):
+    ts = TemplateServer((ip, port), TemplateHandler, id)
+    name = "SuperStyler template server thread"
     t = threading.Thread(target=ts.serve_forever, name=name)
     t.daemon = True
     t.start()
@@ -99,7 +100,7 @@ def stop_server(server):
 if __name__ == '__main__':
     
     print "Starting server on port 9999...",
-    ts = TemplateServer(("0.0.0.0", 9999), TemplateHandler)
+    ts = TemplateServer(("0.0.0.0", 9999), TemplateHandler, "TestServerFromMain")
     print "Started."
     
     # Add some dummy data just to test it

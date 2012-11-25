@@ -7,25 +7,40 @@ import dialog
 
 import utils
 import templateserver
+from editor import CSSEditor
+
+# Note: ss = SuperStyler
 
 PREFIX = '##Styler'
 
+servers = {}
+has_instance = False    # Keep only 1 instance of the plugin window
+
 class SuperStyler(object):
-    
+        
     def show_dialog(self):
+        global has_instance
+        
+        if has_instance:
+            return
+        has_instance = True
+        
         d = QDialog(mw)
+        self.diag = d
         self.frm = dialog.Ui_Dialog()
         self.frm.setupUi(d)
         self.frm.webView.page().setLinkDelegationPolicy(
-                QWebPage.DelegateAllLinks)
-        
+                QWebPage.DelegateAllLinks)       
         self.frm.webView.setHtml(self.get_body())
         self.frm.webView.setStyleSheet(self.get_stylesheet())
         mw.connect(self.frm.webView, SIGNAL("linkClicked(QUrl)"),
                    self.link_clicked)
+        mw.connect(d, SIGNAL("rejected()"), self.on_close)
         d.show()
     
     def get_body(self):
+        global servers
+        
         if self.need_prepare():
             return self.get_prepare_body()
         else:
@@ -35,8 +50,8 @@ class SuperStyler(object):
 <tr>
 <th align=left>Note</th>
 <th align=left>Card</th>
-<th align=left>Server open</th>
-<th align=left>Create server+deck</th>
+<th align=left>Deck/Server</th>
+<th align=left>Editor</th>
 </tr>
 %s
 </table>
@@ -57,6 +72,14 @@ class SuperStyler(object):
                     
     
     def get_model_row(self, model, color):
+        """Get the HTML that comprises the row for a model in the main table."""
+        nonempty_tmpl = self.get_nonempty_ss_tmpl(model)        
+        if nonempty_tmpl is not None :
+            m_column = ("""%s <a style='color: #c44;' href="clear note:'%s' tmpl:'%s'">[clear]</a>""" % 
+                (model['name'], model['id'], nonempty_tmpl['ord'])) 
+        else:
+            m_column = model['name']
+        
         row =\
 """
 <tr style="background-color:%s;">
@@ -64,18 +87,32 @@ class SuperStyler(object):
 <td/>
 <td/>
 <td/>
-""" % (color, model['name'])
+""" % (color, m_column)
         return row
     
-    def get_tmpl_row(self, model, card, color):
+    def get_tmpl_row(self, model, tmpl, color):
+
+        deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Create</a></td>""" %
+                           (model['id'], tmpl['ord'])) 
+
+        global servers
+        has_server = False
+        if (model['name'] in servers and
+            servers[model['name']].id == tmpl['name']):
+            has_server = True
+            
+        editor_column = "<td/>"
+        if has_server and self.get_ss_dyndeck(model) is not None:
+            editor_column = ("""<td><a style='color: #272' href="open note:'%s' tmpl:'%s'">[Open]</a></td>""" %
+                             (model['id'], tmpl['ord']))       
         row =\
 """
 <tr style="background-color:%s;">
 <td/>
 <td>%s</td>
-<td/>
-<td><a href="create note:'%s' card:'%s'">Create</a></td>
-""" % (color, card['name'], model['id'], card['ord'])
+%s
+%s
+""" % (color, tmpl['name'], deck_column, editor_column)
         return row
     
     def get_prepare_body(self):
@@ -106,40 +143,105 @@ table
         mw.progress.start()
         link = url.toString()
         print "Link was: " + link
+        
         if link == "setup":
             self.prepare_collection()
         elif link == "clean":
             self.clean_up()
+        elif link.startswith("clear"):
+            self.handle_clear(link)
         elif link.startswith("create"):
-            m = re.search("create note:'(.+)' card:'(.+)'", link)
-            model_id = m.group(1)
-            tmpl_ord = int(m.group(2))
-            model = mw.col.models.get(model_id)
-            tmpl = model['tmpls'][tmpl_ord]
-            self.start_template_server(model, tmpl)
-            print "MODEL: %s   ---  TMPL: %s  " % (model['name'], tmpl['name'])            
+            self.handle_create(link)
+        elif link.startswith("open"):
+            self.handle_open(link)
         else:
             pass
         
+        # Redraw SuperStyler window
         self.frm.webView.setHtml(self.get_body())
+        
         mw.reset() #update anki UI
         mw.progress.finish()
-        
+
+    def handle_clear(self, link):
+        m = re.search("clear note:'(.+)' tmpl:'(.+)'", link)
+        model_id = m.group(1)
+        tmpl_ord = int(m.group(2))
+        model = mw.col.models.get(model_id)
+        tmpl = model['tmpls'][tmpl_ord]
+        tmpl['qfmt'] = ''
+        tmpl['afmt'] = ''
+        mw.col.models.save(model, True)
+        ## FIXME: This doesn't actually delete the cards :(
+        ## TODO: ALSO CHECK if a dyndeck exists to purge
+    
+    def handle_create(self, link):
+        m = re.search("create note:'(.+)' tmpl:'(.+)'", link)
+        model_id = m.group(1)
+        tmpl_ord = int(m.group(2))
+        model = mw.col.models.get(model_id)
+        tmpl = model['tmpls'][tmpl_ord]
+        self.start_template_server(model, tmpl)
+        print "MODEL: %s   ---  TMPL: %s  " % (model['name'], tmpl['name'])
+            
+    def handle_open(self, link):
+        m = re.search("open note:'(.+)' tmpl:'(.+)'", link)
+        model_id = m.group(1)
+        tmpl_ord = int(m.group(2))
+        model = mw.col.models.get(model_id)
+        tmpl = model['tmpls'][tmpl_ord]
+        server = self.get_open_server(model, tmpl)
+        d = QDialog(mw)
+        editor = CSSEditor(model, server, d)
+        editor.setText(model['css'])
+        self.diag.setVisible(False)
+        d.show()
+        d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))
+
+    
     def need_prepare(self):
         """Check if the plugin needs to create a SuperStyler card type
         for any of the models. If any are missing it, return True."""
         
         for model in mw.col.models.all():
-            if not self.has_ss_tmpl(model):
+            if self.get_ss_tmpl(model) is None:
                 return True
         return False
     
-    def has_ss_tmpl(self, model):
+    def get_ss_tmpl(self, model):
+        """SuperStyler template if the model has one, or None if not."""
         for tmpl in model['tmpls']:
             if tmpl['name'].startswith(PREFIX):
-                return True
-        return False
-            
+                return tmpl
+        return None
+
+    def get_ss_dyndeck(self, model):
+        """SuperStyler dyndeck if one exists for the model, or None if not."""
+        for deck in mw.col.decks.all():
+            m = re.match(PREFIX+"-(.+)-"+PREFIX, deck['name'])
+            if m is not None:
+                deck_name = m.group(1) 
+                if model['name'] == deck_name:
+                    return deck
+        return None
+    
+    def get_nonempty_ss_tmpl(self, model):
+        """Returns the SuperStyler template if it's non-empty, else None."""
+        tmpl = self.get_ss_tmpl(model)
+        if tmpl['qfmt'] or tmpl['afmt']:
+            return tmpl
+        return None
+
+    def get_open_server(self, model, tmpl):
+        """Returns a TemplateServer for the model's template if one exists,
+        or None if not."""
+       
+        if model['name'] in servers:
+            server = servers[model['name']]
+            if server is not None and server.id == tmpl['name']:
+                return server
+        return None
+    
     def prepare_collection(self):
         print "Preparing collection...",
         mw.progress.start()
@@ -158,7 +260,7 @@ table
     def start_template_server(self, model, tmpl):
         # Start a new template server on a free port
         port = utils.get_free_port()
-        server = templateserver.start_new_server("0.0.0.0", port)
+        server = templateserver.start_new_server("0.0.0.0", port, tmpl['name'])
         
         # Read our script into memory
         scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
@@ -185,12 +287,23 @@ table
         srv_tmpl['afmt'] = script + tmpl['afmt']
         mw.col.models.save(model, True)
         
-        self.create_styler_dyndeck(model, srv_tmpl, tmpl['name'])
+        # Add it to our global list of running servers. Close and remove any
+        # that are already running and belong to the same model (since we have
+        # one stylesheet per model, we should only have one editor as well).
+        global servers
+        if model['name'] in servers:
+            old_srv = servers[model['name']]
+            templateserver.stop_server(old_srv) 
+            
+        servers[model['name']] = server
+        server.set_CSS(model['css'])
+        
+        self.create_styler_dyndeck(model, srv_tmpl)
         
     
-    def create_styler_dyndeck(self, model, tmpl, name_suffix):
+    def create_styler_dyndeck(self, model, tmpl):
         # Create a dynamic deck. This also sets it as the current deck
-        deckName = PREFIX + "-" + model['name'] + '-' + name_suffix
+        deckName = PREFIX + "-" + model['name'] + '-' + tmpl['name']
         dynDeckId = mw.col.decks.newDyn(deckName)
         dynDeck = mw.col.decks.get(dynDeckId)
         searchStr =  "note:'%s' card:'%s'" % (model['name'], tmpl['name'])
@@ -209,7 +322,7 @@ table
             if deck['name'].startswith(PREFIX):
                 decks_to_delete.append(deck)
         for deck in decks_to_delete:
-            print "Deleting leftover deck: " + deck['name']
+            print "Deleting ss deck: " + deck['name']
             mw.col.decks.rem(deck['id'])
         
         tmpls_to_delete = []
@@ -219,13 +332,16 @@ table
                     tmpls_to_delete.append((model, tmpl))
     
         for (model, tmpl) in tmpls_to_delete:
-            print "Deleting leftover tmpl: " + tmpl['name'] + " -- from model: " + model['name']
+            print "Deleting ss tmpl: " + tmpl['name'] + " -- from model: " + model['name']
             mw.col.models.remTemplate(model, tmpl)
         
         print "Done!"
         mw.progress.finish()
     
-    
+    def on_close(self):
+        global has_instance
+        has_instance = False
+        
 # create menu items
 ss = SuperStyler()
 ss_menu = QAction("Super Styler", mw)
