@@ -73,8 +73,12 @@ class SuperStyler(object):
     
     def get_model_row(self, model, color):
         """Get the HTML that comprises the row for a model in the main table."""
-        nonempty_tmpl = self.get_nonempty_ss_tmpl(model)        
-        if nonempty_tmpl is not None :
+        nonempty_tmpl = self.get_nonempty_ss_tmpl(model)
+        
+        #has_cards = True
+        #has_dyndeck = True
+                
+        if nonempty_tmpl is not None:
             m_column = ("""%s <a style='color: #c44;' href="clear note:'%s' tmpl:'%s'">[clear]</a>""" % 
                 (model['name'], model['id'], nonempty_tmpl['ord'])) 
         else:
@@ -168,12 +172,23 @@ table
         model_id = m.group(1)
         tmpl_ord = int(m.group(2))
         model = mw.col.models.get(model_id)
+        # Empty the template
         tmpl = model['tmpls'][tmpl_ord]
         tmpl['qfmt'] = ''
         tmpl['afmt'] = ''
         mw.col.models.save(model, True)
-        ## FIXME: This doesn't actually delete the cards :(
-        ## TODO: ALSO CHECK if a dyndeck exists to purge
+        # But this doesn't delete the cards. Do that below.
+        # Copied this from models.py -> remTemplate(). 
+        
+        cids = mw.col.db.list("""
+select c.id from cards c, notes f where c.nid=f.id and mid = ? and ord = ?""",
+                                 model['id'], tmpl['ord'])
+        
+        mw.col.remCards(cids, notes=False)
+        
+        dyndeck = self.get_ss_dyndeck(model)
+        if dyndeck is not None:
+            mw.col.decks.rem(dyndeck['id'])
     
     def handle_create(self, link):
         m = re.search("create note:'(.+)' tmpl:'(.+)'", link)
