@@ -73,14 +73,19 @@ class SuperStyler(object):
     
     def get_model_row(self, model, color):
         """Get the HTML that comprises the row for a model in the main table."""
-        nonempty_tmpl = self.get_nonempty_ss_tmpl(model)
         
-        #has_cards = True
-        #has_dyndeck = True
-                
-        if nonempty_tmpl is not None:
+        tmpl = self.get_ss_tmpl(model)
+        cards = mw.col.findCards("note:'%s' card:'%s'" % (model['name'], tmpl['name']))
+        nonempty_tmpl = self.get_nonempty_ss_tmpl(model) is not None       
+        has_cards = len(cards) > 0
+        has_dyndeck = self.get_ss_dyndeck(model) is not None 
+        
+        # Cards are deleted when the template is blanked. But if, for some 
+        # reason, we have already blanked the template but the cards still 
+        # exist, we need to make available the clear option.
+        if nonempty_tmpl or has_cards or has_dyndeck:
             m_column = ("""%s <a style='color: #c44;' href="clear note:'%s' tmpl:'%s'">[clear]</a>""" % 
-                (model['name'], model['id'], nonempty_tmpl['ord'])) 
+                (model['name'], model['id'], tmpl['ord'])) 
         else:
             m_column = model['name']
         
