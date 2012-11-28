@@ -3,11 +3,12 @@ import re
 
 from aqt import mw
 from aqt.qt import *
-import dialog
+
 
 import utils
 import templateserver
-from editor import CSSEditor
+import maindialog
+import editor
 
 # Note: ss = SuperStyler
 
@@ -27,7 +28,7 @@ class SuperStyler(object):
         
         d = QDialog(mw)
         self.diag = d
-        self.frm = dialog.Ui_Dialog()
+        self.frm = maindialog.Ui_Dialog()
         self.frm.setupUi(d)
         self.frm.webView.page().setLinkDelegationPolicy(
                 QWebPage.DelegateAllLinks)       
@@ -211,12 +212,14 @@ select c.id from cards c, notes f where c.nid=f.id and mid = ? and ord = ?""",
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         server = self.get_open_server(model, tmpl)
+        
         d = QDialog(mw)
-        editor = CSSEditor(model, server, d)
-        editor.setText(model['css'])
+        ed = editor.Dialog()
+        ed.setupUi(mw, model, server, d)
+        d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))
+
         self.diag.setVisible(False)
         d.show()
-        d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))
 
     
     def need_prepare(self):

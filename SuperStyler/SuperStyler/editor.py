@@ -4,18 +4,59 @@
 import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
 
+class Dialog(QDialog):
+        
+    def setupUi(self, mw, model, server, Dialog):
+        self.mw = mw
+        self.model = model
+        self.textEdit = CSSEditor(server)
+        self.textEdit.setText(model['css'])
+        
+        Dialog.resize(550, 600)
+        self.verticalLayout = QVBoxLayout(Dialog)
+        self.gridLayout = QGridLayout()
+        self.gridLayout.addWidget(self.textEdit, 0, 0, 1, 2)
+        self.verticalLayout.addLayout(self.gridLayout)
+                
+        # Save button
+        self.buttonSave = QDialogButtonBox(Dialog)
+        self.buttonSave.setOrientation(Qt.Horizontal)
+        self.buttonSave.setStandardButtons(QDialogButtonBox.Save)
+        self.connect(self.buttonSave, SIGNAL("accepted()"), lambda: self.save_stylesheet())
+        self.connect(self.buttonSave, SIGNAL("rejected()"), lambda: self.save_stylesheet())      
 
+        # Close button
+        self.buttonClose = QDialogButtonBox(Dialog)
+        self.buttonClose.setOrientation(Qt.Horizontal)
+        self.buttonClose.setStandardButtons(QDialogButtonBox.Close)        
+        self.connect(self.buttonClose, SIGNAL("accepted()"), Dialog.accept)
+        self.connect(self.buttonClose, SIGNAL("rejected()"), Dialog.reject)
+        self.buttonClose.setMaximumSize(QSize(100, 16777215))
+
+        self.horizontalLayout = QHBoxLayout()
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.addItem(spacerItem)
+        self.horizontalLayout.addWidget(self.buttonSave)
+        self.horizontalLayout.addWidget(self.buttonClose)
+        self.verticalLayout.addLayout(self.horizontalLayout)
+        
+        QMetaObject.connectSlotsByName(Dialog)
+    
+    def save_stylesheet(self):
+        self.model['css'] = self.textEdit.text()
+        self.mw.col.models.save(self.model)
+        
 class CSSEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, model, server, parent=None):
+    def __init__(self, server, parent=None):
         super(CSSEditor, self).__init__(parent)
         
-        self.model = model
         self.server = server
-        
+                
         # Set the default font
         font = QFont()
         font.setFamily('Courier')
