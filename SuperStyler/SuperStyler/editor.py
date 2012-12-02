@@ -7,6 +7,7 @@ from PyQt4.QtGui import *
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
 
+
 class Dialog(QDialog):
         
     def setupUi(self, mw, model, server, Dialog):
