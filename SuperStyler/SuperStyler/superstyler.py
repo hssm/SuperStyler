@@ -24,11 +24,11 @@ class SuperStyler(object):
         self.frm.webView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)       
         self.frm.webView.setHtml(ub.get_body())
         self.frm.webView.setStyleSheet(ub.get_stylesheet())
-        mw.connect(self.frm.webView, SIGNAL("linkClicked(QUrl)"), self.link_clicked)
-        mw.connect(d, SIGNAL("rejected()"), self.on_close)
+        mw.connect(self.frm.webView, SIGNAL("linkClicked(QUrl)"), self._link_clicked)
+        mw.connect(d, SIGNAL("rejected()"), self._on_close)
         d.show()
     
-    def link_clicked(self, url):
+    def _link_clicked(self, url):
         mw.progress.start()
         link = url.toString()
         print "Link was: " + link
@@ -38,11 +38,11 @@ class SuperStyler(object):
         elif link == "clean":
             df.clean_up()
         elif link.startswith("clear"):
-            self.handle_clear(link)
+            self._handle_clear(link)
         elif link.startswith("create"):
-            self.handle_create(link)
+            self._handle_create(link)
         elif link.startswith("open"):
-            self.handle_open(link)
+            self._handle_open(link)
         else:
             pass
     
@@ -52,18 +52,17 @@ class SuperStyler(object):
         mw.reset() #update anki UI
         mw.progress.finish()
 
-    def on_close(self):
+    def _on_close(self):
         self.has_instance = False
 
 
-    def handle_open(self, link):
+    def _handle_open(self, link):
         m = re.search("open note:'(.+)' tmpl:'(.+)'", link)
         model_id = m.group(1)
         tmpl_ord = int(m.group(2))
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         
-        #----#----#
         server = df.get_open_server(model, tmpl)
         d = QDialog(mw)
         ed = editor.Dialog()
@@ -73,40 +72,28 @@ class SuperStyler(object):
         self.diag.setVisible(False)
         d.show()     
                    
-    def handle_clear(self, link):
+    def _handle_clear(self, link):
         m = re.search("clear note:'(.+)' tmpl:'(.+)'", link)
         model_id = m.group(1)
         tmpl_ord = int(m.group(2))
         model = mw.col.models.get(model_id)
-        
-        #----#----#
-        # Empty the template
         tmpl = model['tmpls'][tmpl_ord]
-        tmpl['qfmt'] = ''
-        tmpl['afmt'] = ''
-        mw.col.models.save(model, True)
-        # But this doesn't delete the cards. Do that below.
-        # Copied this from models.py -> remTemplate(). 
         
-        cids = mw.col.db.list("""
-    select c.id from cards c, notes f where c.nid=f.id and mid = ? and ord = ?""",
-                                 model['id'], tmpl['ord'])
-        
-        mw.col.remCards(cids, notes=False)
-        
+        # Delete the template and all its cards      
+        df.empty_tmpl_and_cards(model, tmpl)
+        # And also any dyndecks we created for this template
         dyndeck = df.get_ss_dyndeck(model)
         if dyndeck is not None:
             mw.col.decks.rem(dyndeck['id'])
         
-    def handle_create(self, link):
+    def _handle_create(self, link):
         m = re.search("create note:'(.+)' tmpl:'(.+)'", link)
         model_id = m.group(1)
         tmpl_ord = int(m.group(2))
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         
-        #----#----#
         df.start_template_server(model, tmpl)
-        print "MODEL: %s   ---  TMPL: %s  " % (model['name'], tmpl['name'])
+
                 
     
