@@ -1,8 +1,19 @@
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Functions that modify the collection to make the plugin work. Includes
+# cleanup routines for when we're done modifying things.
+#
+# A simple web server that hosts the changing stylesheet.
+#
 # This post helped lots:
 # http://www.mlsite.net/blog/?p=80
 
-import BaseHTTPServer
 import threading
+try:
+    import BaseHTTPServer
+except ImportError:
+    from stdLocal import BaseHTTPServer
 
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -16,7 +27,7 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.stylesheet = None
 
     def log_message(self, format, *args):
-        """Turn off logging since anki shows these as errors."""
+        """Turn off logging since Anki shows these as errors."""
         return
 
     def do_HEAD_CSS(self):

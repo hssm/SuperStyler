@@ -1,3 +1,9 @@
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Functions that modify the collection to make the plugin work. Includes
+# cleanup routines for when we're done modifying things.
+
 import re
 import time
 import os
@@ -56,7 +62,6 @@ def get_open_server(model, tmpl):
 def prepare_collection():
     """Create an empty template for every model."""
     
-    print "Preparing collection...",
     mw.progress.start()
     for model in mw.col.models.all():
         if not (get_ss_tmpl(model)):
@@ -66,7 +71,7 @@ def prepare_collection():
             new_tmpl['afmt'] = ''
             mw.col.models.addTemplate(model, new_tmpl)
             mw.col.models.save(model, True)
-    print "Done!"
+
     mw.progress.finish()
         
     

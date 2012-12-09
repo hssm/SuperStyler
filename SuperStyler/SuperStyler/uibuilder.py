@@ -1,3 +1,8 @@
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Get HTML markup to build the UI.
+
 from aqt import mw
 
 import deckfunctions as df

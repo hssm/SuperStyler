@@ -1,10 +1,16 @@
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Open the plugin dialog window and present a WebView to interact with
+# the user. Interactions are handled as HTML anchor clicks.
+
+
 import re
 
 from aqt import mw
 from aqt.qt import *
 
 import maindialog
-import editor
 import uibuilder as ub
 import deckfunctions as df
 
@@ -21,7 +27,7 @@ class SuperStyler(object):
         self.diag = d
         self.frm = maindialog.Ui_Dialog()
         self.frm.setupUi(d)
-        self.frm.webView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)       
+        self.frm.webView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
         self.frm.webView.setHtml(ub.get_body())
         self.frm.webView.setStyleSheet(ub.get_stylesheet())
         mw.connect(self.frm.webView, SIGNAL("linkClicked(QUrl)"), self._link_clicked)
@@ -31,7 +37,6 @@ class SuperStyler(object):
     def _link_clicked(self, url):
         mw.progress.start()
         link = url.toString()
-        print "Link was: " + link
         
         if link == "setup":
             df.prepare_collection()
@@ -65,6 +70,8 @@ class SuperStyler(object):
         
         server = df.get_open_server(model, tmpl)
         d = QDialog(mw)
+        # Lazy load editor -- needed for dll import on Windows
+        import editor
         ed = editor.Dialog()
         ed.setupUi(mw, model, server, d)
         d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))

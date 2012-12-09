@@ -1,3 +1,8 @@
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Add a menu option to open the plugin window. 
+
 from aqt import mw
 from aqt.qt import *
 

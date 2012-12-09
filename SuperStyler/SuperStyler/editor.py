@@ -1,12 +1,19 @@
-# From http://eli.thegreenplace.net/2011/04/01/sample-using-qscintilla-with-pyqt/
+# Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
+# License: GPLv3; http://www.gnu.org/licenses/gpl.txt
+#
+# Show a dialog window with a QScintilla editor to edit the stylesheet.
+# QScintilla code is from:
+# http://eli.thegreenplace.net/2011/04/01/sample-using-qscintilla-with-pyqt/
 # With minor modifications. 
 
 import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
 
+try:
+    from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
+except ImportError:
+    from qtLocal.Qsci import QsciScintilla, QsciLexerCSS   
 
 class Dialog(QDialog):
         
