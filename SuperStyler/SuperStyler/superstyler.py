@@ -13,7 +13,8 @@ from aqt.qt import *
 import maindialog
 import uibuilder as ub
 import deckfunctions as df
-
+import editor
+        
 class SuperStyler(object):
     
     has_instance = False    # Keep only 1 instance of the plugin window
@@ -70,8 +71,6 @@ class SuperStyler(object):
         
         server = df.get_open_server(model, tmpl)
         d = QDialog(mw)
-        # Lazy load editor -- needed for dll import on Windows
-        import editor
         ed = editor.Dialog()
         ed.setupUi(mw, model, server, d)
         d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))
