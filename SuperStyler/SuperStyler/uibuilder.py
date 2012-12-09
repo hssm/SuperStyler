@@ -2,6 +2,8 @@
 # License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 #
 # Get HTML markup to build the UI.
+#
+# I can't get CSS to work in the WebView, so I'm inlining style properties. Ugh. 
 
 from aqt import mw
 
@@ -23,8 +25,8 @@ def get_body():
 </tr>
 %s
 </table>
-<a href="clean">Clean up</a>
-"""
+<br>
+""" +  _get_cleanup_portion()
         s = ''
         color1 = '#ccc'
         color2 = '#eee'
@@ -43,7 +45,7 @@ def get_model_row(model, color):
     """Get the HTML that comprises the row for a model in the main table."""
     
     tmpl = df.get_ss_tmpl(model)
-    cards = mw.col.findCards("note:'%s' card:'%s'" % (model['name'], tmpl['name']))
+    cards = mw.col.findCards("note:'%s' card:'%s'" % (model['id'], tmpl['name']))
     nonempty_tmpl = df.get_nonempty_ss_tmpl(model) is not None       
     has_cards = len(cards) > 0
     has_dyndeck = df.get_ss_dyndeck(model) is not None 
@@ -69,12 +71,12 @@ def get_model_row(model, color):
     
 def get_tmpl_row(model, tmpl, color):
 
-    deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Initialize</a></td>""" %
+    deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Start</a></td>""" %
                        (model['id'], tmpl['ord'])) 
 
     has_server = False
-    if (model['name'] in df.servers and
-        df.servers[model['name']].id == tmpl['name']):
+    if (model['id'] in df.servers and
+        df.servers[model['id']].id == tmpl['name']):
         has_server = True
         
     editor_column = "<td/>"
@@ -98,9 +100,23 @@ def get_prepare_body():
 <br>
 <a href="setup">Click here!</a>
 <br>
-<p>Explain what happens here!</p>
-<a href="clean">Clean up</a>
-""" 
+<br>
+<p>
+<b>Details:</b>
+<br>
+To preserve the integrity of your collection, SuperStyler creates a new
+card type for itself to modify. However, Anki requires a full sync every
+time a new card type is created. This plugin is all about convenience, and a
+full sync every session would be very inconvenient! 
+<b>Preparing the collection will create a card type in all of your models</b>
+so you only have to do a full sync once. These cards will appear in the card
+editor starting with the name "##Styler". Their templates will be empty, so no
+cards will be generated until you start a styling session. As long as they are
+empty, there is no harm in keeping these templates. You will be cautioned
+to clear any non-empty templates when you are done styling.</p>
+<br>
+<br>
+""" + _get_cleanup_portion()
     
 def get_stylesheet():
     """ I don't think this works :( """
@@ -113,4 +129,19 @@ table
   color: #fcc;
 }
 </style>
+"""
+
+def _get_cleanup_portion():
+    if not df.need_cleanup():
+        return ""
+    else:
+        return\
+"""
+<div style="background-color: #f4eeee;">
+<b>Clean up collection</b>
+<br>
+<p>Clicking this link will remove all traces of SuperStyler from your collection.
+A full sync will be triggered.</p>
+<a href="clean">Clean up</a>
+</div> 
 """

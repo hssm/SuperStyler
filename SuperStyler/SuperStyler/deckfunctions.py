@@ -24,6 +24,18 @@ def need_prepare():
         if get_ss_tmpl(model) is None:
             return True
     return False
+
+def need_cleanup():
+    """Check if there is anything in the collection that was created
+    by this plugin. Return True if anything is found."""
+    for deck in mw.col.decks.all():
+        if deck['name'].startswith(PREFIX):
+            return True
+    
+    for model in mw.col.models.all():
+        for tmpl in model['tmpls']:
+            if tmpl['name'].startswith(PREFIX):
+                return True
     
 def get_ss_tmpl(model):
     """SuperStyler template if the model has one, or None if not."""
@@ -35,10 +47,11 @@ def get_ss_tmpl(model):
 def get_ss_dyndeck(model):
     """SuperStyler dyndeck if one exists for the model, or None if not."""
     for deck in mw.col.decks.all():
-        m = re.match(PREFIX+"-(.+)-"+PREFIX, deck['name'])
+        m = re.match(PREFIX+"-(.+)-(.+)", deck['name'])
         if m is not None:
-            deck_name = m.group(1) 
-            if model['name'] == deck_name:
+            model_id = m.group(1)
+            model_name = m.group(2)
+            if model_id == str(model['id']):
                 return deck
     return None
     
@@ -53,8 +66,8 @@ def get_open_server(model, tmpl):
     """Returns a TemplateServer for the model's template if one exists,
     or None if not."""
    
-    if model['name'] in servers:
-        server = servers[model['name']]
+    if model['id'] in servers:
+        server = servers[model['id']]
         if server is not None and server.id == tmpl['name']:
             return server
     return None
@@ -65,7 +78,7 @@ def prepare_collection():
     mw.progress.start()
     for model in mw.col.models.all():
         if not (get_ss_tmpl(model)):
-            tmpl_name = PREFIX + "-" + str(int(time.time()*1000))
+            tmpl_name = PREFIX + "-" + str(model['id'])
             new_tmpl = mw.col.models.newTemplate(tmpl_name)
             new_tmpl['qfmt'] = ''
             new_tmpl['afmt'] = ''
@@ -100,7 +113,7 @@ def start_template_server(model, tmpl):
             break
         
     if not srv_tmpl:
-        cardName = PREFIX + "-" + str(int(time.time()*1000))
+        cardName = PREFIX + "-" + model['id']
         srv_tmpl = mw.col.models.newTemplate(cardName)
         # Add it to the model we selected
         mw.col.models.addTemplate(model, srv_tmpl)
@@ -112,11 +125,11 @@ def start_template_server(model, tmpl):
     # Add it to our global list of running servers. Close and remove any
     # that are already running and belong to the same model (since we have
     # one stylesheet per model, we should only have one editor as well).
-    if model['name'] in servers:
-        old_srv = servers[model['name']]
+    if model['id'] in servers:
+        old_srv = servers[model['id']]
         templateserver.stop_server(old_srv) 
         
-    servers[model['name']] = server
+    servers[model['id']] = server
     server.set_CSS(model['css'])
     
     create_styler_dyndeck(model, srv_tmpl)
@@ -126,10 +139,10 @@ def create_styler_dyndeck(model, tmpl):
     """Create a dynamic deck. This also sets it as the current deck. The
     name is decided based on the model, template, and an internal prefix."""
     
-    deckName = PREFIX + "-" + model['name'] + '-' + tmpl['name']
+    deckName = PREFIX + "-" + str(model['id']) + "-" + model['name']
     dynDeckId = mw.col.decks.newDyn(deckName)
     dynDeck = mw.col.decks.get(dynDeckId)
-    searchStr =  "note:'%s' card:'%s'" % (model['name'], tmpl['name'])
+    searchStr =  "note:'%s' card:'%s'" % (model['id'], tmpl['name'])
     dynDeck['delays'] = None
     dynDeck['terms'][0] =  [searchStr, 25, 0] #search, limit, current
     dynDeck['resched'] = True
@@ -162,6 +175,7 @@ def clean_up():
     for deck in mw.col.decks.all():
         if deck['name'].startswith(PREFIX):
             decks_to_delete.append(deck)
+    
     for deck in decks_to_delete:
         mw.col.decks.rem(deck['id'])
     

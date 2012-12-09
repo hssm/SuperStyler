@@ -52,15 +52,12 @@ class SuperStyler(object):
         else:
             pass
     
-        # Redraw SuperStyler window on every click
-        self.frm.webView.setHtml(ub.get_body())
-        
-        mw.reset() #update anki UI
+        # Redraw SuperStyler and Anki windows on every click
+        self._redraw()
         mw.progress.finish()
 
     def _on_close(self):
         self.has_instance = False
-
 
     def _handle_open(self, link):
         m = re.search("open note:'(.+)' tmpl:'(.+)'", link)
@@ -73,7 +70,11 @@ class SuperStyler(object):
         d = QDialog(mw)
         ed = editor.Dialog()
         ed.setupUi(mw, model, server, d)
-        d.connect(d, SIGNAL("rejected()"), lambda: self.diag.setVisible(True))
+
+        def on_close():
+            self.diag.setVisible(True)
+            self._redraw()
+        d.connect(d, SIGNAL("rejected()"), on_close)
     
         self.diag.setVisible(False)
         d.show()     
@@ -101,5 +102,7 @@ class SuperStyler(object):
         
         df.start_template_server(model, tmpl)
 
+    def _redraw(self):
+        self.frm.webView.setHtml(ub.get_body())        
+        mw.reset() #update anki UI
                 
-    
