@@ -142,7 +142,7 @@ def create_styler_dyndeck(model, tmpl):
     deckName = PREFIX + "-" + str(model['id']) + "-" + model['name']
     dynDeckId = mw.col.decks.newDyn(deckName)
     dynDeck = mw.col.decks.get(dynDeckId)
-    searchStr =  "note:'%s' card:'%s'" % (model['id'], tmpl['name'])
+    searchStr =  "note:'%s' card:'%s'" % (model['name'], tmpl['name'])
     dynDeck['delays'] = None
     dynDeck['terms'][0] =  [searchStr, 25, 0] #search, limit, current
     dynDeck['resched'] = True
