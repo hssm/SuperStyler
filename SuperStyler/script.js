@@ -1,27 +1,27 @@
 <script>
-  //  Remove the existing style element
+  // Remove the existing style element
   var style = document.body.getElementsByTagName("style")[0];
   if (style) {
     style.parentNode.removeChild(style);
   }
 
-  // Download and apply new css every .5 seconds
+  // Download and apply the new stylesheet three times a second
   setInterval(updateCss, 500);
   function updateCss() {  
-    // First grab a copy of the old one (we delete it later instead of now to avoid flickering)
+    // First grab a copy of the old css (we delete it later instead of now
+    // to avoid flickering).
     var oldStyle = document.getElementById("updatingCss");
 
     var ss = document.createElement("link");
     ss.id = "updatingCss";
     ss.type = "text/css";
     ss.rel = "stylesheet";
-    // Unfortunately I have to add a random thing on the end because the Android WebView refuses to
-    // not cache the stylesheet.
+    
+    // Unfortunately I have to add a random tag on the end because the Android
+    // WebView refuses to fetch a new one, even when asked not to cache it.
     ss.href = "http://##AddressGoesHere##/style.css?"+Date.now(); 
     document.body.appendChild(ss);
-
-    // Cheap hack to avoid flickering. Delete the old style a little while after the new one has finished.
-    // I am positive there is a better way to do this.
+    
     setTimeout(function () {
       if (oldStyle) {
         document.body.removeChild(oldStyle);
