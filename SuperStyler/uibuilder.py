@@ -117,7 +117,7 @@ empty, there is no harm in keeping these templates. You will be cautioned
 to clear any non-empty templates when you are done styling.</p>
 <br>
 <br>
-""" + _get_clear_warning() + _get_cleanup_portion()
+""" + _get_cleanup_portion()
     
 def get_stylesheet():
     """ I don't think this works :( """
