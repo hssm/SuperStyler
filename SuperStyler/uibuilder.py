@@ -25,35 +25,36 @@ def get_body():
 </tr>
 %s
 </table>
-<br>
-""" +  _get_cleanup_portion()
+"""
         s = ''
         color1 = '#ccc'
         color2 = '#eee'
         
+        warn_clear_first = False
+        
         for model in mw.col.models.all():
-            s += get_model_row(model, color1)
+            need_clear = df.need_model_clear(model)
+            if need_clear:
+                warn_clear_first = True                
+            s += get_model_row(model, color1, need_clear=need_clear)
             for tmpl in model['tmpls']:
                 if tmpl['name'].startswith(df.PREFIX):
                     continue
                 s += get_tmpl_row(model, tmpl, color1)
             (color1, color2) = (color2, color1)
+        
+        if warn_clear_first:
+            body = body + _get_clear_warning() 
+        
+        body = body + _get_cleanup_portion()
         return body % s
                     
     
-def get_model_row(model, color):
+def get_model_row(model, color, need_clear):
     """Get the HTML that comprises the row for a model in the main table."""
-    
+
     tmpl = df.get_ss_tmpl(model)
-    cards = mw.col.findCards("note:'%s' card:'%s'" % (model['id'], tmpl['name']))
-    nonempty_tmpl = df.get_nonempty_ss_tmpl(model) is not None       
-    has_cards = len(cards) > 0
-    has_dyndeck = df.get_ss_dyndeck(model) is not None 
-    
-    # Cards are deleted when the template is blanked. But if, for some 
-    # reason, we have already blanked the template but the cards still 
-    # exist, we need to make available the clear option.
-    if nonempty_tmpl or has_cards or has_dyndeck:
+    if need_clear:
         m_column = ("""%s <a style='color: #c44;' href="clear note:'%s' tmpl:'%s'">[clear]</a>""" % 
             (model['name'], model['id'], tmpl['ord'])) 
     else:
@@ -116,7 +117,7 @@ empty, there is no harm in keeping these templates. You will be cautioned
 to clear any non-empty templates when you are done styling.</p>
 <br>
 <br>
-""" + _get_cleanup_portion()
+""" + _get_clear_warning() + _get_cleanup_portion()
     
 def get_stylesheet():
     """ I don't think this works :( """
@@ -131,13 +132,24 @@ table
 </style>
 """
 
+def _get_clear_warning():
+    return\
+"""
+<div style="padding: 1em 0">
+<b style="background-color: #fcc;">Warning!</b> You have SuperStyler cards in your collection. Be sure not to review
+cards normally until you have removed them by clicking the <span style="color: #c44;">[clear]</span> link above.
+</div>
+"""
+
+    
+
 def _get_cleanup_portion():
-    if not df.need_cleanup():
+    if not df.check_full_cleanup():
         return ""
     else:
         return\
 """
-<div style="background-color: #f4eeee;">
+<div style="background-color: #f4eeee; padding: 1em 0;">
 <b>Clean up collection</b>
 <br>
 <p>Clicking this link will remove all traces of SuperStyler from your collection.

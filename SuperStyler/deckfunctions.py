@@ -25,9 +25,10 @@ def need_prepare():
             return True
     return False
 
-def need_cleanup():
+def check_full_cleanup():
     """Check if there is anything in the collection that was created
     by this plugin. Return True if anything is found."""
+    
     for deck in mw.col.decks.all():
         if deck['name'].startswith(PREFIX):
             return True
@@ -36,9 +37,30 @@ def need_cleanup():
         for tmpl in model['tmpls']:
             if tmpl['name'].startswith(PREFIX):
                 return True
+
+def need_model_clear(model):
+    """Check if there is anything relating to a model that lingers in
+    the collection that can be cleaned up."""
+    
+    # The plugin creates templates, cards, and dyndecks. If cards or 
+    # dyndecks exist for this model, or if the SuperStyler template
+    # is non-empty (since it generates cards), we signal the need for
+    # a clear.
+
+    tmpl = get_ss_tmpl(model)
+    cards = mw.col.findCards("note:'%s' card:'%s'" % (model['id'], tmpl['name']))
+    nonempty_tmpl = get_nonempty_ss_tmpl(model) is not None       
+    has_cards = len(cards) > 0
+    has_dyndeck = get_ss_dyndeck(model) is not None
+    
+    if nonempty_tmpl or has_cards or has_dyndeck:
+        return True
+    else:
+        return False
     
 def get_ss_tmpl(model):
     """SuperStyler template if the model has one, or None if not."""
+    
     for tmpl in model['tmpls']:
         if tmpl['name'].startswith(PREFIX):
             return tmpl
@@ -46,6 +68,7 @@ def get_ss_tmpl(model):
 
 def get_ss_dyndeck(model):
     """SuperStyler dyndeck if one exists for the model, or None if not."""
+    
     for deck in mw.col.decks.all():
         m = re.match(PREFIX+"-(.+)-(.+)", deck['name'])
         if m is not None:
@@ -57,6 +80,7 @@ def get_ss_dyndeck(model):
     
 def get_nonempty_ss_tmpl(model):
     """Returns the SuperStyler template if it's non-empty, else None."""
+    
     tmpl = get_ss_tmpl(model)
     if tmpl['qfmt'] or tmpl['afmt']:
         return tmpl
@@ -86,7 +110,6 @@ def prepare_collection():
             mw.col.models.save(model, True)
 
     mw.progress.finish()
-        
     
 def start_template_server(model, tmpl):
     """Start a new template server to serve the model's stylesheet. Use
@@ -133,7 +156,6 @@ def start_template_server(model, tmpl):
     server.set_CSS(model['css'])
     
     create_styler_dyndeck(model, srv_tmpl)
-        
     
 def create_styler_dyndeck(model, tmpl):
     """Create a dynamic deck. This also sets it as the current deck. The
@@ -163,7 +185,6 @@ def empty_tmpl_and_cards(model, tmpl):
     select c.id from cards c, notes f where c.nid=f.id and mid = ? and ord = ?""",
                                  model['id'], tmpl['ord'])
     mw.col.remCards(cids, notes=False)
-
     
 def clean_up():
     """Remove any templates (and thus cards) and dynamic decks created by
