@@ -6,9 +6,9 @@
   }
 
   // Download and apply the new stylesheet three times a second
-  setInterval(updateCss, 500);
+  setInterval(updateCss, 333);
   function updateCss() {  
-    // First grab a copy of the old css (we delete it later instead of now
+    // Grab a copy of the old css (we delete it later instead of now
     // to avoid flickering).
     var oldStyle = document.getElementById("updatingCss");
 
@@ -19,7 +19,7 @@
     
     // Unfortunately I have to add a random tag on the end because the Android
     // WebView refuses to fetch a new one, even when asked not to cache it.
-    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now(); 
+    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now();   
     document.body.appendChild(ss);
     
     setTimeout(function () {
