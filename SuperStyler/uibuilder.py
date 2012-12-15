@@ -105,16 +105,11 @@ def get_prepare_body():
 <p>
 <b>Details:</b>
 <br>
-To preserve the integrity of your collection, SuperStyler creates a new
-card type for itself to modify. However, Anki requires a full sync every
-time a new card type is created. This plugin is all about convenience, and a
-full sync every session would be very inconvenient! 
 <b>Preparing the collection will create a card type in all of your models</b>
 so you only have to do a full sync once. These cards will appear in the card
-editor starting with the name "##Styler". Their templates will be empty, so no
-cards will be generated until you start a styling session. As long as they are
-empty, there is no harm in keeping these templates. You will be cautioned
-to clear any non-empty templates when you are done styling.</p>
+editor as "##Styler-xxx". Their templates will be populated and cleared during
+use of the plugin; do not modify them yourself.
+</p>
 <br>
 <br>
 """ + _get_cleanup_portion()
