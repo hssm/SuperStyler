@@ -14,10 +14,24 @@ Template editing is not (yet!) supported. CSS only.
 
 ## How to use
 ### Prepare
+![Prepare](https://raw.github.com/ntsp/SuperStyler/master/docs/image/prepare.png "Prepare collection")  
+
 ### Start
-### Dynamic decks
+![Main](https://raw.github.com/ntsp/SuperStyler/master/docs/image/mainscreen.png "Main screen")  
+
+Click on a "Start" link to insert all the required data in your collection and open a server in the background.  
+![Opened](https://raw.github.com/ntsp/SuperStyler/master/docs/image/open.png "SuperStyler server open")  
+
+A dynamic deck is created to present cards of the new server-based SuperStyler card type.  
+![Dyn](https://raw.github.com/ntsp/SuperStyler/master/docs/image/dyndeck.png "SuperStyler dynamic deck")  
+
+This deck can be opened on any device to view changes as you make them. Of course, you need to synchronize your collection to make this deck available everywhere.
+
 ### Editor
+![Editor](https://raw.github.com/ntsp/SuperStyler/master/docs/image/editor.png "SuperStyler editor")  
+
 ### Cleanup
+Cleanup is important!
 
 ---
 
