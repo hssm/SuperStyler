@@ -32,7 +32,7 @@ Click on the "[Open]" link to open the editor. This editor is linked to the serv
 
 ![Editor](https://raw.github.com/ntsp/SuperStyler/master/docs/image/editor.png "SuperStyler editor")  
 
-At this point, there will also be a new dynamic deck which contains the new SuperStyler cards that grab the styleshet from the abovementioned server. 
+At this point, there will also be a new dynamic deck which contains the new SuperStyler cards that grab the stylesheet from the abovementioned server. 
 
 ![Dyn](https://raw.github.com/ntsp/SuperStyler/master/docs/image/dyndeck.png "SuperStyler dynamic deck")  
 
@@ -41,14 +41,27 @@ This is the deck you must open to preview stylesheet changes when editing. The n
 Once satisfied with your changes, **click the *save* button to save changes (TODO: save automatically like the original card editor)**.
 
 ### Cleanup
-Cleanup is important!
+Before reviewing normally again, you must remove any temporary SuperStyler data from your collection to avoid interfering with your real data. This means clicking any "[clear]" links in the main window until there are none left (and the warning is gone). Manually deleting the dynamic deck from the home screen is not sufficient; you **must** use the [clear] option in SuperStyler instead.
+
+If you wish to uninstall the add-on (or otherwise remove all traces of it from your collection), use the "Clean up" link at the bottom of the main window. This will remove any dynamic decks or card types (and their cards) with the prefix "##Styler". 
+
+---
+
+### Known issues
+- Using @font-face with a large font on a slow device will result in flickering of text that uses that font.
+- AnkiDroid's relative font size has no effect; it always returns to 100% (because relative size is calculated in code before outputting the html/css, which we are replacing)
+- On Linux: some distributions might not install QScintilla along with pyqt4. If you get an ImportError, you need to install the python-qscintilla2 package or an equivalent.
 
 ---
 
 ## Developer notes
+The plugin will run as-is if you place everything from this level in the Anki add-ons directory. There is one compiled file, maindialog.py, which is generated with pyuic4 (```pyuic4 maindialog.ui > maindialog.py```).
+The output is already included in this project, so you don't need to do anything unless you modify the .ui file.
 
-### Known issues
 ### TODOs
-### Running the add-on from this directory
+- Offer to specify a port instead of randomly picking one. I'm pretty sure firewalls are going to block this.
+- Get rid of the "Save" button in the editor and save as you edit (in line with the card editor)
+- Perhaps include qscintilla in its entirety to avoid packaging woes.
 
-maindialog.ui needs to be compiled with pyuic4, but the output (maindialog.py) is already included in the project, so there's no need to do that unless you modify the .ui file.
+### Packaging
+I manually package it. I simply zip everything except for the doc directory, the readmes, and the .ui file.
