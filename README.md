@@ -24,6 +24,11 @@ The main screen lists your notes and all of their card types. You are shown note
 ![Main](https://raw.github.com/ntsp/SuperStyler/master/docs/image/mainscreen.png "Main screen")  
 
 To begin editing, decide which card type to use as your base template and click the "Start" link next to it. The card's template will be copied over to the SuperStyler card (so your original is untouched) and a server is opened in the background. 
+
+**Note:** since SuperStyler opens a server to host your stylesheet, you will need inbound access to your machine, which a firewall will block. On Windows, you will be asked to give permission to Anki to allow it to communicate over the network. Stick to the defaults and click the "Allow access" button to proceed.
+
+![Firewall](https://raw.github.com/ntsp/SuperStyler/master/docs/image/firewall.png "Windows firewall warning")  
+
 ![Opened](https://raw.github.com/ntsp/SuperStyler/master/docs/image/open.png "SuperStyler server open")  
 
 **Note:** the main window shows you a warning that you must follow. SuperStyler creates brand new cards to freely modify for itself. These cards are in your collection and look identical to the base template you copied, so it's hard to tell them apart. If not removed, these cards may appear in your normal reviews as new cards. You *must* make use of the "[clear]" link shown on the SuperStyler main screen to remove any junk related to SuperStyler before reviewing normally again.
@@ -59,7 +64,6 @@ The plugin will run as-is if you place everything from this level in the Anki ad
 The output is already included in this project, so you don't need to do anything unless you modify the .ui file.
 
 ### TODOs
-- Offer to specify a port instead of randomly picking one. I'm pretty sure firewalls are going to block this.
 - Get rid of the "Save" button in the editor and save as you edit (in line with the card editor)
 - Perhaps include qscintilla in its entirety to avoid packaging woes.
 
