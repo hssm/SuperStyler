@@ -10,10 +10,7 @@ import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-try:
-    from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
-except ImportError:
-    from qtLocal.Qsci import QsciScintilla, QsciLexerCSS   
+from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
 
 class Dialog(QDialog):
         
