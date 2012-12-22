@@ -3,4 +3,4 @@
 # See github page for more information:
 # https://github.com/ntsp/SuperStyler
 
-import SuperStyler.main
+import SuperStyler.menu

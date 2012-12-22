@@ -14,5 +14,3 @@ ss_menu = QAction("Super Styler", mw)
 mw.connect(ss_menu, SIGNAL("triggered()"), ss_diag.show_dialog)
 # and add it to the tools menu
 mw.form.menuTools.addAction(ss_menu)
-
-

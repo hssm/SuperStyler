@@ -10,12 +10,15 @@ from aqt import mw
 import deckfunctions as df
 
 def get_body():
-    
     if df.need_prepare():
         return get_prepare_body()
     else:
         body =\
 """
+<div>
+Port selection here!
+</div>
+<br>
 <table width=100%%>
 <tr>
 <th align=left>Note</th>
@@ -71,7 +74,6 @@ def get_model_row(model, color, need_clear):
     return row
     
 def get_tmpl_row(model, tmpl, color):
-
     deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Start</a></td>""" %
                        (model['id'], tmpl['ord'])) 
 

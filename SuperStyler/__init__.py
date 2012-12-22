@@ -12,15 +12,21 @@
 import sys
 import platform
 
+
 try:
-    if sys.platform.startswith('win'):
-        import qtLocal.win.Qsci
-    elif sys.platform.startswith('linux'):
-        if platform.architecture()[0] == "64bit":
-            import qtLocal.linux64.Qsci
-        elif platform.architecture()[0] == "32bit":
-            import qtLocal.linux32.Qsci
-    else:
+    # We'll try using the natively installed one first, and fall back
+    # on our local copy if it's not installed.
+    import PyQt4.Qsci
+except ImportError:
+    try:
+        if sys.platform.startswith('win'):
+            import qtLocal.win.Qsci
+        elif sys.platform.startswith('linux'):
+            if platform.architecture()[0] == "64bit":
+                import qtLocal.linux64.Qsci
+            elif platform.architecture()[0] == "32bit":
+                import qtLocal.linux32.Qsci
+        else:
+            pass
+    except:
         pass
-except:
-    pass
