@@ -5,13 +5,8 @@
 # cleanup routines for when we're done modifying things.
 
 import re
-import time
-import os
 
 from aqt import mw
-
-import utils
-import templateserver
 
 PREFIX = '##Styler'
 
@@ -85,18 +80,6 @@ def get_nonempty_ss_tmpl(model):
         return tmpl
     return None
 
-def get_open_server(model, tmpl):
-    """Returns a TemplateServer for the model's template if one exists,
-    or None if not."""
-    return True
-#    templateserver.get_model(model)
-#       
-#    if model['id'] in servers:
-#        server = servers[model['id']]
-#        if server is not None and server.id == tmpl['name']:
-#            return server
-#    return None
-    
 def prepare_collection():
     """Create an empty template for every model."""
     
@@ -111,59 +94,16 @@ def prepare_collection():
             mw.col.models.save(model, True)
 
     mw.progress.finish()
-    
-def start_serving_template(model, tmpl):
-  
-    # Start a new template server on a free port
-    port = utils.get_free_port()
-    #server = templateserver.start_new_server("0.0.0.0", port, tmpl['name'])
-    
-    # Read our script into memory
-    scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
-    script = open(scriptPath, 'r').read()
-    
-    templateserver.add_template(model, tmpl)
-    # Update the script with our machine's local network IP and port
-    url = str(utils.get_lan_ip()) + ':' + str(port)
-    script = script.replace('##AddressGoesHere##', url)
-            
-    srv_tmpl = None
-    # Get the styler template (or create it if it doesn't exist)
-    for _tmpl in model['tmpls']:
-        if _tmpl['name'].startswith(PREFIX):
-            srv_tmpl = _tmpl
-            break
-        
-    if not srv_tmpl:
-        cardName = PREFIX + "-" + model['id']
-        srv_tmpl = mw.col.models.newTemplate(cardName)
-        # Add it to the model we selected
-        mw.col.models.addTemplate(model, srv_tmpl)
-        
-    srv_tmpl['qfmt'] = script + tmpl['qfmt']
-    srv_tmpl['afmt'] = script + tmpl['afmt']
-    mw.col.models.save(model, True)
-    
-    # Add it to our global list of running servers. Close and remove any
-    # that are already running and belong to the same model (since we have
-    # one stylesheet per model, we should only have one editor as well).
-#    if model['id'] in servers:
-#        old_srv = servers[model['id']]
-#        templateserver.stop_server(old_srv) 
-#        
-#    servers[model['id']] = server
-#    server.set_CSS(model['css'])
-    
-    create_styler_dyndeck(model, srv_tmpl)
-    
-def create_styler_dyndeck(model, tmpl):
+
+def create_styler_dyndeck(model):
     """Create a dynamic deck. This also sets it as the current deck. The
-    name is decided based on the model, template, and an internal prefix."""
+    name is decided based on the model, and an internal prefix."""
     
+    ss_tmpl = get_ss_tmpl(model)
     deckName = PREFIX + "-" + str(model['id']) + "-" + model['name']
     dynDeckId = mw.col.decks.newDyn(deckName)
     dynDeck = mw.col.decks.get(dynDeckId)
-    searchStr =  "note:'%s' card:'%s'" % (model['name'], tmpl['name'])
+    searchStr =  "note:'%s' card:'%s'" % (model['name'], ss_tmpl['name'])
     dynDeck['delays'] = None
     dynDeck['terms'][0] =  [searchStr, 25, 0] #search, limit, current
     dynDeck['resched'] = True

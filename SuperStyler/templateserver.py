@@ -9,14 +9,43 @@
 # This post helped lots:
 # http://www.mlsite.net/blog/?p=80
 
+from aqt import mw
+
 import threading
 import re
+import os
 try:
     import BaseHTTPServer
 except ImportError:
     from stdLocal import BaseHTTPServer
 
-models = {}
+import utils
+import deckfunctions as df
+
+# Templates we are hosting, indexed by model id
+hosted_tmpls = {}
+
+# This is the javascript we will inject into each template when adding it
+# to this server.
+scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
+script = open(scriptPath, 'r').read()
+
+# TODO: manual port selection
+PORT = 4321 
+#utils.get_free_port()
+
+# Update the javascript with our machine's local network IP and port
+url = str(utils.get_lan_ip()) + ':' + str(PORT)
+script = script.replace('##AddressGoesHere##', url)
+
+server_started = False
+
+class HostedTmpl:
+
+    def __init__(self, model, tmpl, ss_tmpl):
+        self.model = model
+        self.tmpl = tmpl
+        self.ss_tmpl = ss_tmpl
 
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -25,9 +54,6 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
         except IOError: # We'll gladly ignore broken pipes.
             return
-        self.question_template = None
-        self.answer_template = None
-        self.stylesheet = None
 
     def log_message(self, format, *args):
         """Turn off logging since Anki shows these as errors."""
@@ -56,38 +82,36 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        
         m = re.search("/(.+)/(.+)", self.path)
-        model_id = m.group(1)
+        if m is None:
+            return
+        
+        model_id = int(m.group(1))
         path = m.group(2)
+        
+        if model_id not in hosted_tmpls.keys():
+            return
+        
         if path.startswith("style.css"):
-            if self.stylesheet is None:
-                self.do_HEAD_500()
-                self.wfile.write("Stylesheet has not been set")
-            else:
-                self.do_HEAD_CSS()
-                self.wfile.write(self.stylesheet)
+            self.do_HEAD_CSS()
+            ht = hosted_tmpls[model_id]
+            self.wfile.write(ht.model['css'])
         elif path == "question.html":
-            if self.question_template is None:
-                self.do_HEAD_500()
-                self.wfile.write("Question template has not been set")
-            else:
-                self.do_HEAD_HTML()
-                self.wfile.write(self.question_template)
+            # TODO?
+            self.do_HEAD_HTML()
+            self.wfile.write(hosted_tmpls[model_id].tmpl['qfmt'])
         elif path == "answer.html":
-            if self.answer_template is None:
-                self.do_HEAD_500()
-                self.wfile.write("Answer template has not been set")
-            else:
-                self.do_HEAD_HTML()
-                self.wfile.write(self.answer_template)
+            # TODO?
+            self.do_HEAD_HTML()
+            self.wfile.write(hosted_tmpls[model_id].tmpl['afmt'])
         else:
             self.do_HEAD_404()
             self.wfile.write("Not found")
 
 class TemplateServer(BaseHTTPServer.HTTPServer):
     
-    def __init__(self, server_address, RequestHandlerClass, id):
-        self.id = id
+    def __init__(self, server_address, RequestHandlerClass):
         BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)       
         self.RequestHandlerClass.question_template = None
         self.RequestHandlerClass.answer_template = None
@@ -102,50 +126,50 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
     def set_answer(self, answer):
         self.RequestHandlerClass.answer_template = answer
 
-
 def add_template(model, tmpl):
+    global server_started
+    # Delay starting the server until we have at least one thing to host in it
+    if not server_started:
+        _start_server()
+        server_started = True
+
+    ss_tmpl = df.get_ss_tmpl(model)
+    # In case the user deleted it while the SuperStyler window is open
+    if ss_tmpl is None:
+        return
+    
+    ss_tmpl['qfmt'] = script + tmpl['qfmt']
+    ss_tmpl['afmt'] = script + tmpl['afmt']
+    mw.col.models.save(model, True)
+    
+    ht = HostedTmpl(model, tmpl, ss_tmpl)
+    hosted_tmpls[model['id']] = ht
+    
+def remove_template(model):
+    del hosted_tmpls[model['id']]
+
+def update_stylesheet(model, text):
+    ht = hosted_tmpls[model['id']]
+    ht.model['css'] = text
+
+def update_qfmt(model, tmpl, qfmt):
     pass
 
-def remove_template(model, tmpl):
+def update_afmt(model, tmpl, afmt):
     pass
 
-def has_model(model):
-    pass
+def is_hosted(model, tmpl):
+    if model['id'] in hosted_tmpls.keys():
+        hosted_name = hosted_tmpls[model['id']].tmpl['name']
+        if hosted_name == tmpl['name']:
+            return True
+    return False
 
-def _start_server(ip, port):
-    ts = TemplateServer((ip, port), TemplateHandler)
-    name = "SuperStyler template server thread"
-    t = threading.Thread(target=ts.serve_forever, name=name)
+def _start_server():
+    ip = "0.0.0.0"
+    ts = TemplateServer((ip, PORT), TemplateHandler)    
+    t_name = "SuperStyler template server thread"
+    t = threading.Thread(target=ts.serve_forever, name=t_name)
     t.daemon = True
     t.start()
 
-def _stop_server(server):
-    server.shutdown()
-
-if __name__ == '__main__':
-    
-    print "Starting server on port 9999...",
-    ts = TemplateServer(("0.0.0.0", 9999), TemplateHandler, "TestServerFromMain")
-    print "Started."
-    
-    # Add some dummy data just to test it
-    css = \
-"""
-.card
-{
-  position: fixed;
-  background-color: #533;
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-"""   
-    ts.set_question("This is a question!")
-    #ts.set_answer("This is an answer!")
-    ts.set_CSS(css)
-    
-    try:
-        ts.serve_forever()
-    except KeyboardInterrupt:
-        pass
-    ts.server_close()

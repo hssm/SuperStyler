@@ -8,6 +8,7 @@
 from aqt import mw
 
 import deckfunctions as df
+import templateserver
 
 def get_body():
     if df.need_prepare():
@@ -77,11 +78,8 @@ def get_tmpl_row(model, tmpl, color):
     deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Start</a></td>""" %
                        (model['id'], tmpl['ord'])) 
 
-    has_server = True
-#    if (model['id'] in df.servers and
-#        df.servers[model['id']].id == tmpl['name']):
-#        has_server = True
-        
+    has_server = templateserver.is_hosted(model, tmpl)
+           
     editor_column = "<td/>"
     if has_server and df.get_ss_dyndeck(model) is not None:
         editor_column = ("""<td><a style='color: #272' href="open note:'%s' tmpl:'%s'">[Open]</a></td>""" %

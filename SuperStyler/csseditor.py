@@ -69,8 +69,6 @@ class CSSEditor(QsciScintilla):
 
         # not too small
         self.setMinimumSize(600, 450)
-        
-        self.connect(self, SIGNAL("textChanged()"), self.on_change)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
@@ -78,13 +76,3 @@ class CSSEditor(QsciScintilla):
             self.markerDelete(nline, self.ARROW_MARKER_NUM)
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
-
-    def on_change(self):
-        print "Text changed to: " + self.text()
-
-    def get_text(self):
-        return self.text()
-    
-    def set_text(self, text):
-        self.setText(text)
-    

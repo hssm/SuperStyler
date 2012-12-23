@@ -11,10 +11,11 @@ from aqt import mw
 from aqt.qt import *
 
 import maindialog
+import editordialog
 import uibuilder as ub
 import deckfunctions as df
-import editordialog
 from csseditor import CSSEditor
+import templateserver
         
 class SuperStyler(object):
     
@@ -70,19 +71,24 @@ class SuperStyler(object):
         d = QDialog(mw)
         ed = editordialog.Dialog()
         css_ed = CSSEditor()
-        css_ed.set_text(model['css'])
+        css_ed.setText(model['css'])
         ed.setupUi(mw, css_ed, d)
-
+        
+        def on_change():
+            templateserver.update_stylesheet(model, css_ed.text())
+        
         def on_close():
-            model['css'] = css_ed.get_text()
+            model['css'] = css_ed.text()
             mw.col.models.save(model)
             self.diag.setVisible(True)
             self._redraw()
             
+        d.connect(css_ed, SIGNAL("textChanged()"), on_change)
         d.connect(d, SIGNAL("rejected()"), on_close)
+        
         self.diag.setVisible(False)
-        d.show()     
-                   
+        d.show()
+        
     def _handle_clear(self, link):
         m = re.search("clear note:'(.+)' tmpl:'(.+)'", link)
         model_id = m.group(1)
@@ -90,12 +96,15 @@ class SuperStyler(object):
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         
-        # Delete the template and all its cards      
+        # Delete the template and all its cards
         df.empty_tmpl_and_cards(model, tmpl)
         # And also any dyndecks we created for this template
         dyndeck = df.get_ss_dyndeck(model)
         if dyndeck is not None:
             mw.col.decks.rem(dyndeck['id'])
+            
+        # And unhost it from our template server
+        templateserver.remove_template(model)
         
     def _handle_create(self, link):
         m = re.search("create note:'(.+)' tmpl:'(.+)'", link)
@@ -103,8 +112,8 @@ class SuperStyler(object):
         tmpl_ord = int(m.group(2))
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
-        
-        df.start_serving_template(model, tmpl)
+        templateserver.add_template(model, tmpl)
+        df.create_styler_dyndeck(model)
 
     def _redraw(self):
         self.frm.webView.setHtml(ub.get_body())        
