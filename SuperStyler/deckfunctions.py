@@ -14,7 +14,6 @@ import utils
 import templateserver
 
 PREFIX = '##Styler'
-servers = {}
 
 def need_prepare():
     """Check if the plugin needs to create a SuperStyler card type
@@ -89,12 +88,14 @@ def get_nonempty_ss_tmpl(model):
 def get_open_server(model, tmpl):
     """Returns a TemplateServer for the model's template if one exists,
     or None if not."""
-   
-    if model['id'] in servers:
-        server = servers[model['id']]
-        if server is not None and server.id == tmpl['name']:
-            return server
-    return None
+    return True
+#    templateserver.get_model(model)
+#       
+#    if model['id'] in servers:
+#        server = servers[model['id']]
+#        if server is not None and server.id == tmpl['name']:
+#            return server
+#    return None
     
 def prepare_collection():
     """Create an empty template for every model."""
@@ -111,19 +112,17 @@ def prepare_collection():
 
     mw.progress.finish()
     
-def start_template_server(model, tmpl):
-    """Start a new template server to serve the model's stylesheet. Use
-    tmpl as the base template, which is copied and has javascript injected
-    into it that fetches the content of the server."""
-    
+def start_serving_template(model, tmpl):
+  
     # Start a new template server on a free port
     port = utils.get_free_port()
-    server = templateserver.start_new_server("0.0.0.0", port, tmpl['name'])
+    #server = templateserver.start_new_server("0.0.0.0", port, tmpl['name'])
     
     # Read our script into memory
     scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
     script = open(scriptPath, 'r').read()
     
+    templateserver.add_template(model, tmpl)
     # Update the script with our machine's local network IP and port
     url = str(utils.get_lan_ip()) + ':' + str(port)
     script = script.replace('##AddressGoesHere##', url)
@@ -148,12 +147,12 @@ def start_template_server(model, tmpl):
     # Add it to our global list of running servers. Close and remove any
     # that are already running and belong to the same model (since we have
     # one stylesheet per model, we should only have one editor as well).
-    if model['id'] in servers:
-        old_srv = servers[model['id']]
-        templateserver.stop_server(old_srv) 
-        
-    servers[model['id']] = server
-    server.set_CSS(model['css'])
+#    if model['id'] in servers:
+#        old_srv = servers[model['id']]
+#        templateserver.stop_server(old_srv) 
+#        
+#    servers[model['id']] = server
+#    server.set_CSS(model['css'])
     
     create_styler_dyndeck(model, srv_tmpl)
     

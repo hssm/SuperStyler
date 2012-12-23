@@ -10,10 +10,13 @@
 # http://www.mlsite.net/blog/?p=80
 
 import threading
+import re
 try:
     import BaseHTTPServer
 except ImportError:
     from stdLocal import BaseHTTPServer
+
+models = {}
 
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
@@ -53,21 +56,24 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path.startswith("/style.css?"):
+        m = re.search("/(.+)/(.+)", self.path)
+        model_id = m.group(1)
+        path = m.group(2)
+        if path.startswith("style.css"):
             if self.stylesheet is None:
                 self.do_HEAD_500()
                 self.wfile.write("Stylesheet has not been set")
             else:
                 self.do_HEAD_CSS()
                 self.wfile.write(self.stylesheet)
-        elif self.path == "/question.html":
+        elif path == "question.html":
             if self.question_template is None:
                 self.do_HEAD_500()
                 self.wfile.write("Question template has not been set")
             else:
                 self.do_HEAD_HTML()
                 self.wfile.write(self.question_template)
-        elif self.path == "/answer.html":
+        elif path == "answer.html":
             if self.answer_template is None:
                 self.do_HEAD_500()
                 self.wfile.write("Answer template has not been set")
@@ -97,15 +103,23 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
         self.RequestHandlerClass.answer_template = answer
 
 
-def start_new_server(ip, port, id):
-    ts = TemplateServer((ip, port), TemplateHandler, id)
+def add_template(model, tmpl):
+    pass
+
+def remove_template(model, tmpl):
+    pass
+
+def has_model(model):
+    pass
+
+def _start_server(ip, port):
+    ts = TemplateServer((ip, port), TemplateHandler)
     name = "SuperStyler template server thread"
     t = threading.Thread(target=ts.serve_forever, name=name)
     t.daemon = True
     t.start()
-    return ts
 
-def stop_server(server):
+def _stop_server(server):
     server.shutdown()
 
 if __name__ == '__main__':

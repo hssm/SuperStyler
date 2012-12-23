@@ -1,66 +1,23 @@
 # Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
 # License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 #
-# Show a dialog window with a QScintilla editor to edit the stylesheet.
+# QScintilla editor to edit the stylesheet.
+#
 # QScintilla code is from:
 # http://eli.thegreenplace.net/2011/04/01/sample-using-qscintilla-with-pyqt/
 # With minor modifications. 
 
 import sys
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-
 from PyQt4.Qsci import QsciScintilla, QsciLexerCSS
-
-class Dialog(QDialog):
-        
-    def setupUi(self, mw, model, server, Dialog):
-        self.mw = mw
-        self.model = model
-        self.textEdit = CSSEditor(server)
-        self.textEdit.setText(model['css'])
-        
-        Dialog.resize(550, 600)
-        self.verticalLayout = QVBoxLayout(Dialog)
-        self.gridLayout = QGridLayout()
-        self.gridLayout.addWidget(self.textEdit, 0, 0, 1, 2)
-        self.verticalLayout.addLayout(self.gridLayout)
-                
-        # Save button
-        self.buttonSave = QDialogButtonBox(Dialog)
-        self.buttonSave.setOrientation(Qt.Horizontal)
-        self.buttonSave.setStandardButtons(QDialogButtonBox.Save)
-        self.connect(self.buttonSave, SIGNAL("accepted()"), lambda: self.save_stylesheet())
-        self.connect(self.buttonSave, SIGNAL("rejected()"), lambda: self.save_stylesheet())      
-
-        # Close button
-        self.buttonClose = QDialogButtonBox(Dialog)
-        self.buttonClose.setOrientation(Qt.Horizontal)
-        self.buttonClose.setStandardButtons(QDialogButtonBox.Close)        
-        self.connect(self.buttonClose, SIGNAL("accepted()"), Dialog.accept)
-        self.connect(self.buttonClose, SIGNAL("rejected()"), Dialog.reject)
-        self.buttonClose.setMaximumSize(QSize(100, 16777215))
-
-        self.horizontalLayout = QHBoxLayout()
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        self.horizontalLayout.addItem(spacerItem)
-        self.horizontalLayout.addWidget(self.buttonSave)
-        self.horizontalLayout.addWidget(self.buttonClose)
-        self.verticalLayout.addLayout(self.horizontalLayout)
-        
-        QMetaObject.connectSlotsByName(Dialog)
-    
-    def save_stylesheet(self):
-        self.model['css'] = self.textEdit.text()
-        self.mw.col.models.save(self.model)
         
 class CSSEditor(QsciScintilla):
     ARROW_MARKER_NUM = 8
 
-    def __init__(self, server, parent=None):
+    def __init__(self, parent=None):
         super(CSSEditor, self).__init__(parent)
-        
-        self.server = server
                 
         # Set the default font
         font = QFont()
@@ -113,7 +70,7 @@ class CSSEditor(QsciScintilla):
         # not too small
         self.setMinimumSize(600, 450)
         
-        self.connect(self, SIGNAL("textChanged()"), self.update_server)
+        self.connect(self, SIGNAL("textChanged()"), self.on_change)
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
@@ -122,12 +79,12 @@ class CSSEditor(QsciScintilla):
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
-    def update_server(self):
-        self.server.set_CSS(self.text())
+    def on_change(self):
+        print "Text changed to: " + self.text()
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    editor = CSSEditor(None)
-    editor.show()
-    editor.setText("body { background-color: #fff; }")
-    app.exec_()
+    def get_text(self):
+        return self.text()
+    
+    def set_text(self, text):
+        self.setText(text)
+    

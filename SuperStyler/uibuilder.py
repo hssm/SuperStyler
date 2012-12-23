@@ -13,12 +13,12 @@ def get_body():
     if df.need_prepare():
         return get_prepare_body()
     else:
+        port = 4321
         body =\
 """
 <div>
-Port selection here!
+Using port: <span id="port">%s</span> 
 </div>
-<br>
 <table width=100%%>
 <tr>
 <th align=left>Note</th>
@@ -28,7 +28,7 @@ Port selection here!
 </tr>
 %s
 </table>
-"""
+""" 
         s = ''
         color1 = '#ccc'
         color2 = '#eee'
@@ -50,7 +50,7 @@ Port selection here!
             body = body + _get_clear_warning() 
         
         body = body + _get_cleanup_portion()
-        return body % s
+        return body % (port, s)
                     
     
 def get_model_row(model, color, need_clear):
@@ -77,10 +77,10 @@ def get_tmpl_row(model, tmpl, color):
     deck_column = ("""<td><a href="create note:'%s' tmpl:'%s'">Start</a></td>""" %
                        (model['id'], tmpl['ord'])) 
 
-    has_server = False
-    if (model['id'] in df.servers and
-        df.servers[model['id']].id == tmpl['name']):
-        has_server = True
+    has_server = True
+#    if (model['id'] in df.servers and
+#        df.servers[model['id']].id == tmpl['name']):
+#        has_server = True
         
     editor_column = "<td/>"
     if has_server and df.get_ss_dyndeck(model) is not None:

@@ -13,7 +13,8 @@ from aqt.qt import *
 import maindialog
 import uibuilder as ub
 import deckfunctions as df
-import editor
+import editordialog
+from csseditor import CSSEditor
         
 class SuperStyler(object):
     
@@ -66,16 +67,19 @@ class SuperStyler(object):
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         
-        server = df.get_open_server(model, tmpl)
         d = QDialog(mw)
-        ed = editor.Dialog()
-        ed.setupUi(mw, model, server, d)
+        ed = editordialog.Dialog()
+        css_ed = CSSEditor()
+        css_ed.set_text(model['css'])
+        ed.setupUi(mw, css_ed, d)
 
         def on_close():
+            model['css'] = css_ed.get_text()
+            mw.col.models.save(model)
             self.diag.setVisible(True)
             self._redraw()
+            
         d.connect(d, SIGNAL("rejected()"), on_close)
-    
         self.diag.setVisible(False)
         d.show()     
                    
@@ -100,7 +104,7 @@ class SuperStyler(object):
         model = mw.col.models.get(model_id)
         tmpl = model['tmpls'][tmpl_ord]
         
-        df.start_template_server(model, tmpl)
+        df.start_serving_template(model, tmpl)
 
     def _redraw(self):
         self.frm.webView.setHtml(ub.get_body())        
