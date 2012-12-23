@@ -9,44 +9,33 @@
 # This post helped lots:
 # http://www.mlsite.net/blog/?p=80
 
-from aqt import mw
 
 import threading
-import re
 import os
-try:
-    import BaseHTTPServer
-except ImportError:
-    from stdLocal import BaseHTTPServer
+import re
+from stdLocal import BaseHTTPServer
+
+from aqt import mw
 
 import utils
 import deckfunctions as df
-
-# Templates we are hosting, indexed by model id
-hosted_tmpls = {}
-
-# This is the javascript we will inject into each template when adding it
-# to this server.
-scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
-script = open(scriptPath, 'r').read()
 
 # TODO: manual port selection
 PORT = 4321 
 #utils.get_free_port()
 
-# Update the javascript with our machine's local network IP and port
-url = str(utils.get_lan_ip()) + ':' + str(PORT)
-script = script.replace('##AddressGoesHere##', url)
+# Templates we are hosting, indexed by model id
+hosted_tmpls = {}
 
 server_started = False
-
+        
 class HostedTmpl:
 
     def __init__(self, model, tmpl, ss_tmpl):
         self.model = model
         self.tmpl = tmpl
         self.ss_tmpl = ss_tmpl
-
+        
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     
     def __init__(self, request, client_address, server):
@@ -126,7 +115,11 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
     def set_answer(self, answer):
         self.RequestHandlerClass.answer_template = answer
 
+
+
+        
 def add_template(model, tmpl):
+
     global server_started
     # Delay starting the server until we have at least one thing to host in it
     if not server_started:
@@ -138,15 +131,24 @@ def add_template(model, tmpl):
     if ss_tmpl is None:
         return
     
+    # Load the javascript we will inject into each template
+    scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
+    script = open(scriptPath, 'r').read()
+    
+    # Update the javascript with the full address to this template
+    url = "%s:%s/%s" % (str(utils.get_lan_ip()), str(PORT), model['id']) 
+    script = script.replace('##AddressGoesHere##', url)
+    
     ss_tmpl['qfmt'] = script + tmpl['qfmt']
     ss_tmpl['afmt'] = script + tmpl['afmt']
     mw.col.models.save(model, True)
     
     ht = HostedTmpl(model, tmpl, ss_tmpl)
     hosted_tmpls[model['id']] = ht
-    
+
 def remove_template(model):
-    del hosted_tmpls[model['id']]
+    if model['id'] in hosted_tmpls:
+        del hosted_tmpls[model['id']]
 
 def update_stylesheet(model, text):
     ht = hosted_tmpls[model['id']]
