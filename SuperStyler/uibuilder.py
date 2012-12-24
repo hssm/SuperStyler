@@ -14,12 +14,18 @@ def get_body():
     if df.need_prepare():
         return get_prepare_body()
     else:
-        port = 4321
-        body =\
+        # Add a port notification if we have it set manually
+        portsection = ""
+        if templateserver.use_manual_port:
+            portsection =\
 """
 <div>
 Using port: <span id="port">%s</span> 
 </div>
+""" % templateserver.port
+
+        body = portsection +\
+"""
 <table width=100%%>
 <tr>
 <th align=left>Note</th>
@@ -51,7 +57,7 @@ Using port: <span id="port">%s</span>
             body = body + _get_clear_warning() 
         
         body = body + _get_cleanup_portion()
-        return body % (port, s)
+        return body % s
                     
     
 def get_model_row(model, color, need_clear):

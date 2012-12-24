@@ -13,16 +13,18 @@
 import threading
 import os
 import re
-from stdLocal import BaseHTTPServer
+from stdLocal import BaseHTTPServer, SocketServer
 
 from aqt import mw
 
 import utils
 import deckfunctions as df
 
-# TODO: manual port selection
-PORT = 4321 
-#utils.get_free_port()
+# Use the user-specified port 
+use_manual_port = False
+# User-specified port number
+port = 0 
+
 
 # Templates we are hosting, indexed by model id
 hosted_tmpls = {}
@@ -134,9 +136,10 @@ def add_template(model, tmpl):
     # Load the javascript we will inject into each template
     scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
     script = open(scriptPath, 'r').read()
-    
+
+
     # Update the javascript with the full address to this template
-    url = "%s:%s/%s" % (str(utils.get_lan_ip()), str(PORT), model['id']) 
+    url = "%s:%s/%s" % (str(utils.get_lan_ip()), port, model['id']) 
     script = script.replace('##AddressGoesHere##', url)
     
     ss_tmpl['qfmt'] = script + tmpl['qfmt']
@@ -168,10 +171,22 @@ def is_hosted(model, tmpl):
     return False
 
 def _start_server():
-    ip = "0.0.0.0"
-    ts = TemplateServer((ip, PORT), TemplateHandler)    
-    t_name = "SuperStyler template server thread"
-    t = threading.Thread(target=ts.serve_forever, name=t_name)
-    t.daemon = True
-    t.start()
+    if use_manual_port:
+        _port = port
+    else:
+        _port = utils.get_free_port()
+        
+    try:
+        ip = "0.0.0.0"
+        ts = TemplateServer((ip, _port), TemplateHandler)    
+        t_name = "SuperStyler template server thread"
+        t = threading.Thread(target=ts.serve_forever, name=t_name)
+        t.daemon = True
+        t.start()
+    except SocketServer.socket.error, e:
+        from aqt.utils import showInfo
+        s = ("SuperStyler failed to open a server. Make sure the chosen port "
+             "(%s) is not use.\n\nError was: %s") % (_port, str(e))
+        showInfo(s)
+        
 
