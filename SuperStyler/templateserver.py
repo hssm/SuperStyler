@@ -186,7 +186,7 @@ def _start_server():
     except SocketServer.socket.error, e:
         from aqt.utils import showInfo
         s = ("SuperStyler failed to open a server. Make sure the chosen port "
-             "(%s) is not use.\n\nError was: %s") % (_port, str(e))
+             "(%s) is not in use.\n\nError was: %s") % (_port, str(e))
         showInfo(s)
         
 
