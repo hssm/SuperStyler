@@ -4,6 +4,8 @@ SuperStyler is an add-on for [Anki](http://ankisrs.net/) which allows you to edi
 
 [Here is a YouTube video](http://www.youtube.com/watch?v=9-nN6KMO3Cw) demonstrating the add-on.
 
+[Link to add-on on AnkiWeb](https://ankiweb.net/shared/info/1880763157).
+
 ---
 ## Purpose
 This add-on was created in response to the frustration of creating suitable stylesheets for my mobile devices; making small changes, syncing the deck on both ends, and then realising the changes weren't what you needed, is nettlesome. After doing it a hundred times, this add-on mysteriously materialized for the good of compulsive stylesheetists everywhere. It also helps to create better cross-platform stylesheets for those who intend to widely distribute their decks.
@@ -59,6 +61,7 @@ If you wish to uninstall the add-on (or otherwise remove all traces of it from y
 ### Known issues
 - Using @font-face with a large font on a slow device will result in flickering of text that uses that font.
 - AnkiDroid's relative font size has no effect; it always returns to 100% (because relative size is calculated in code before outputting the html/css, which we are replacing)
+
 ---
 
 ## Developer notes
