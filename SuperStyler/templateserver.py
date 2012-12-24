@@ -171,14 +171,14 @@ def is_hosted(model, tmpl):
     return False
 
 def _start_server():
-    if use_manual_port:
-        _port = port
-    else:
-        _port = utils.get_free_port()
-        
+    global port
+    
+    if not use_manual_port:
+        port = utils.get_free_port()
+
     try:
         ip = "0.0.0.0"
-        ts = TemplateServer((ip, _port), TemplateHandler)    
+        ts = TemplateServer((ip, port), TemplateHandler)    
         t_name = "SuperStyler template server thread"
         t = threading.Thread(target=ts.serve_forever, name=t_name)
         t.daemon = True
@@ -186,7 +186,7 @@ def _start_server():
     except SocketServer.socket.error, e:
         from aqt.utils import showInfo
         s = ("SuperStyler failed to open a server. Make sure the chosen port "
-             "(%s) is not in use.\n\nError was: %s") % (_port, str(e))
+             "(%s) is not in use.\n\nError was: %s") % (port, str(e))
         showInfo(s)
         
 
