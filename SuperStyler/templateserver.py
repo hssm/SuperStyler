@@ -1,9 +1,6 @@
 # Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
 # License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 #
-# Functions that modify the collection to make the plugin work. Includes
-# cleanup routines for when we're done modifying things.
-#
 # A simple web server that hosts the changing stylesheet.
 #
 # This post helped lots:
@@ -118,7 +115,6 @@ class TemplateServer(BaseHTTPServer.HTTPServer):
         self.RequestHandlerClass.answer_template = answer
 
 
-
         
 def add_template(model, tmpl):
 
@@ -136,7 +132,6 @@ def add_template(model, tmpl):
     # Load the javascript we will inject into each template
     scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
     script = open(scriptPath, 'r').read()
-
 
     # Update the javascript with the full address to this template
     url = "%s:%s/%s" % (str(utils.get_lan_ip()), port, model['id']) 
