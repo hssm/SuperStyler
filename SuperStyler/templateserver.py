@@ -146,15 +146,17 @@ def add_template(model, tmpl):
     ss_tmpl['afmt'] = script + tmpl['afmt']
     mw.col.models.save(model, True)
     
-    ht = HostedTmpl(model, tmpl, ss_tmpl)
-    hosted_tmpls[model['id']] = ht
+    mid = int(model['id'])
+    hosted_tmpls[mid] = HostedTmpl(model, tmpl, ss_tmpl)
 
 def remove_template(model):
-    if model['id'] in hosted_tmpls:
-        del hosted_tmpls[model['id']]
+    mid = int(model['id'])
+    if mid in hosted_tmpls:
+        del hosted_tmpls[mid]
 
 def update_stylesheet(model, text):
-    ht = hosted_tmpls[model['id']]
+    mid = int(model['id'])
+    ht = hosted_tmpls[mid]
     ht.model['css'] = text
 
 def update_qfmt(model, tmpl, qfmt):
@@ -164,8 +166,9 @@ def update_afmt(model, tmpl, afmt):
     pass
 
 def is_hosted(model, tmpl):
-    if model['id'] in hosted_tmpls.keys():
-        hosted_name = hosted_tmpls[model['id']].tmpl['name']
+    mid = int(model['id'])
+    if mid in hosted_tmpls.keys():
+        hosted_name = hosted_tmpls[mid].tmpl['name']
         if hosted_name == tmpl['name']:
             return True
     return False
