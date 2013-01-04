@@ -17,29 +17,30 @@ from aqt import mw
 import utils
 import deckfunctions as df
 
-# Use the user-specified port 
+# Use the user-specified port
 use_manual_port = False
 # User-specified port number
-port = 0 
+port = 0
 
 
 # Templates we are hosting, indexed by model id
 hosted_tmpls = {}
 
 server_started = False
-        
+
 class HostedTmpl:
 
     def __init__(self, model, tmpl, ss_tmpl):
         self.model = model
         self.tmpl = tmpl
         self.ss_tmpl = ss_tmpl
-        
+
 class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
-    
+
     def __init__(self, request, client_address, server):
         try:
-            BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+            BaseHTTPServer.BaseHTTPRequestHandler.__init__(
+                self, request, client_address, server)
         except IOError: # We'll gladly ignore broken pipes.
             return
 
@@ -50,37 +51,39 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_HEAD_CSS(self):
         self.send_response(200)
         self.send_header("Content-type", "text/css")
-        self.send_header('Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header(
+            'Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
         self.send_header('Pragma', 'no-cache')
         self.end_headers()
 
     def do_HEAD_HTML(self):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
-        self.send_header('Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header(
+            'Cache-control', 'no-cache, no-store, must-revalidate, max-age=0')
         self.send_header('Pragma', 'no-cache')
         self.end_headers()
 
     def do_HEAD_404(self):
         self.send_response(404)
-        self.end_headers()        
+        self.end_headers()
 
     def do_HEAD_500(self):
         self.send_response(500)
         self.end_headers()
 
     def do_GET(self):
-        
+
         m = re.search("/(.+)/(.+)", self.path)
         if m is None:
             return
-        
+
         model_id = int(m.group(1))
         path = m.group(2)
-        
+
         if model_id not in hosted_tmpls.keys():
             return
-        
+
         if path.startswith("style.css"):
             self.do_HEAD_CSS()
             ht = hosted_tmpls[model_id]
@@ -98,24 +101,25 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.wfile.write("Not found")
 
 class TemplateServer(BaseHTTPServer.HTTPServer):
-    
+
     def __init__(self, server_address, RequestHandlerClass):
-        BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)       
+        BaseHTTPServer.HTTPServer.__init__(
+            self, server_address, RequestHandlerClass)
         self.RequestHandlerClass.question_template = None
         self.RequestHandlerClass.answer_template = None
         self.RequestHandlerClass.stylesheet = None
-        
+
     def set_CSS(self, css_text):
         self.RequestHandlerClass.stylesheet = css_text
-    
+
     def set_question(self, question):
         self.RequestHandlerClass.question_template = question
-    
+
     def set_answer(self, answer):
         self.RequestHandlerClass.answer_template = answer
 
 
-        
+
 def add_template(model, tmpl):
 
     global server_started
@@ -128,19 +132,19 @@ def add_template(model, tmpl):
     # In case the user deleted it while the SuperStyler window is open
     if ss_tmpl is None:
         return
-    
+
     # Load the javascript we will inject into each template
     scriptPath = os.path.join(os.path.dirname(__file__), 'script.js')
     script = open(scriptPath, 'r').read()
 
     # Update the javascript with the full address to this template
-    url = "%s:%s/%s" % (str(utils.get_lan_ip()), port, model['id']) 
+    url = "%s:%s/%s" % (str(utils.get_lan_ip()), port, model['id'])
     script = script.replace('##AddressGoesHere##', url)
-    
+
     ss_tmpl['qfmt'] = script + tmpl['qfmt']
     ss_tmpl['afmt'] = script + tmpl['afmt']
     mw.col.models.save(model, True)
-    
+
     mid = int(model['id'])
     hosted_tmpls[mid] = HostedTmpl(model, tmpl, ss_tmpl)
 
@@ -170,13 +174,13 @@ def is_hosted(model, tmpl):
 
 def _start_server():
     global port
-    
+
     if not use_manual_port:
         port = utils.get_free_port()
 
     try:
         ip = "0.0.0.0"
-        ts = TemplateServer((ip, port), TemplateHandler)    
+        ts = TemplateServer((ip, port), TemplateHandler)
         t_name = "SuperStyler template server thread"
         t = threading.Thread(target=ts.serve_forever, name=t_name)
         t.daemon = True
@@ -186,5 +190,3 @@ def _start_server():
         s = ("SuperStyler failed to open a server. Make sure the chosen port "
              "(%s) is not in use.\n\nError was: %s") % (port, str(e))
         showInfo(s)
-        
-
