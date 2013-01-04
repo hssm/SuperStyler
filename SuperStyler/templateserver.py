@@ -87,15 +87,17 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if path.startswith("style.css"):
             self.do_HEAD_CSS()
             ht = hosted_tmpls[model_id]
-            self.wfile.write(ht.model['css'])
+            self.wfile.write(ht.model['css'].encode('utf-8'))
         elif path == "question.html":
             # TODO?
             self.do_HEAD_HTML()
-            self.wfile.write(hosted_tmpls[model_id].tmpl['qfmt'])
+            self.wfile.write(
+                hosted_tmpls[model_id].tmpl['qfmt'].encode('utf-8'))
         elif path == "answer.html":
             # TODO?
             self.do_HEAD_HTML()
-            self.wfile.write(hosted_tmpls[model_id].tmpl['afmt'])
+            self.wfile.write(
+                hosted_tmpls[model_id].tmpl['afmt'].encode('utf-8'))
         else:
             self.do_HEAD_404()
             self.wfile.write("Not found")
