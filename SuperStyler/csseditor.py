@@ -18,7 +18,9 @@ class CSSEditor(QsciScintilla):
 
     def __init__(self, parent=None):
         super(CSSEditor, self).__init__(parent)
-                
+
+        self.setUtf8(True)
+        
         # Set the default font
         font = QFont()
         font.setFamily('Courier')
