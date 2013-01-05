@@ -75,14 +75,14 @@ class SuperStyler(object):
         ed.setupUi(mw, css_ed, d)
         
         def on_change():
-            templateserver.update_stylesheet(model, css_ed.text())
+            model['css'] = css_ed.text()
+            templateserver.update_stylesheet(model, model['css'])
         
         def on_close():
-            model['css'] = css_ed.text()
             mw.col.models.save(model)
             self.diag.setVisible(True)
             self._redraw()
-            
+                
         d.connect(css_ed, SIGNAL("textChanged()"), on_change)
         d.connect(d, SIGNAL("rejected()"), on_close)
         
