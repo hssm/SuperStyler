@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*- 
 # Copyright (C) Houssam Salem <houssam.salem.au@gmail.com>
 # License: GPLv3; http://www.gnu.org/licenses/gpl.txt
 #
@@ -81,10 +82,16 @@ class CSSEditor(QsciScintilla):
 
 
 if __name__ == "__main__":
-    testcss = """
+    testcss = u"""
 body
 {
   background-color: #437;
+}
+
+/*Comment! Test some unicode...*/
+body:hover:after
+{
+  content: "←←→→→→→→←←←←←←←"
 }
 
 #someid
