@@ -78,3 +78,27 @@ class CSSEditor(QsciScintilla):
             self.markerDelete(nline, self.ARROW_MARKER_NUM)
         else:
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
+
+
+if __name__ == "__main__":
+    testcss = """
+body
+{
+  background-color: #437;
+}
+
+#someid
+{
+  invalidthing: 53;
+}
+
+.someclass
+{
+  color: #222;
+}
+"""
+    app = QApplication(sys.argv)
+    editor = CSSEditor()
+    editor.show()
+    editor.setText(testcss)
+    app.exec_()
