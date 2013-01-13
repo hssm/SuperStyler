@@ -142,9 +142,12 @@ def add_template(model, tmpl):
     # Update the javascript with the full address to this template
     url = "%s:%s/%s" % (str(utils.get_lan_ip()), port, model['id'])
     script = script.replace('##AddressGoesHere##', url)
+    # Add class attribute of original card for card-specific styling
+    klass = "card card" + str(tmpl['ord']+1)
+    script = script.replace('##ClassGoesHere##', klass)
 
-    ss_tmpl['qfmt'] = script + tmpl['qfmt']
-    ss_tmpl['afmt'] = script + tmpl['afmt']
+    ss_tmpl['qfmt'] = tmpl['qfmt'] + script
+    ss_tmpl['afmt'] = tmpl['afmt'] + script
     mw.col.models.save(model, True)
 
     mid = int(model['id'])
