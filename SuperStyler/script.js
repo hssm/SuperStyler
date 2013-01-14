@@ -20,16 +20,16 @@ function initial() {
     if (document.body.className.indexOf("card") !== -1) {
         document.body.className = cardClass;
     }
-    
+
     // AnkiDroid places it in the first span inside body
     var cspan = document.body.getElementsByTagName("span")[0];
-    if (cspan.className.indexOf("card") !== -1) {
+    if (cspan != undefined && cspan.className.indexOf("card") !== -1) {
         cspan.className = cardClass;
     }
     
     // AnkiWeb puts it in qa_box
     var qa_box = document.getElementById("qa_box");
-    if (qa_box.className.indexOf("card") !== -1) {
+    if (qa_box != undefined && qa_box.className.indexOf("card") !== -1) {
         qa_box.className = cardClass;
     }
 }
@@ -48,12 +48,13 @@ function updateCss() {
     ss.rel = "stylesheet";
     
     ss.onload = function() {
-        oldStyle.parentNode.removeChild(oldStyle);
+    	if (oldStyle)
+            document.body.removeChild(oldStyle);
     }
     
     // Unfortunately I have to add a random tag on the end because the Android
     // WebView refuses to fetch a new one, even when asked not to cache it.
-    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now();   
+    ss.href = "http://##AddressGoesHere##/style.css?"+Date.now();
     document.body.appendChild(ss);
 }
 
