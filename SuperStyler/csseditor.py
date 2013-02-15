@@ -30,6 +30,10 @@ class CSSEditor(QsciScintilla):
         self.setFont(font)
         self.setMarginsFont(font)
 
+        # Use 4 spaces instead of tabs
+        self.setIndentationsUseTabs(False)
+        self.setIndentationWidth(4)
+        
         # Margin 0 is used for line numbers
         fontmetrics = QFontMetrics(font)
         self.setMarginsFont(font)
@@ -65,13 +69,13 @@ class CSSEditor(QsciScintilla):
         self.setLexer(lexer)
         self.SendScintilla(QsciScintilla.SCI_STYLESETFONT, 1, 'Courier')
 
-        # Don't want to see the horizontal scrollbar at all
-        # Use raw message to Scintilla here (all messages are documented
-        # here: http://www.scintilla.org/ScintillaDoc.html)
-        self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 0)
-
         # not too small
         self.setMinimumSize(600, 450)
+        
+        # Allow horizontal scroll as line width increases
+        self.SendScintilla(QsciScintilla.SCI_SETSCROLLWIDTH, 5)
+        self.SendScintilla(QsciScintilla.SCI_SETSCROLLWIDTHTRACKING, 1)
+
 
     def on_margin_clicked(self, nmargin, nline, modifiers):
         # Toggle marker for the line the margin was clicked on
