@@ -73,7 +73,6 @@ class TemplateHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-
         m = re.search("/(.+)/(.+)", self.path)
         if m is None:
             return

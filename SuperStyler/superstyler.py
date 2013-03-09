@@ -14,9 +14,14 @@ import maindialog
 import editordialog
 import uibuilder as ub
 import deckfunctions as df
-from csseditor import CSSEditor
 import templateserver
-        
+# Resort to a plain old QTextEdit if we can't create a CSSEditor.
+# This is the case on OS X, for example, since there is no QScintilla
+try:
+    from csseditor import CSSEditor
+except ImportError:
+    CSSEditor = QTextEdit
+
 class SuperStyler(object):
     
     has_instance = False    # Keep only 1 instance of the plugin window
@@ -75,7 +80,7 @@ class SuperStyler(object):
         ed.setupUi(mw, css_ed, d)
         
         def on_change():
-            model['css'] = css_ed.text()
+            model['css'] = css_ed.toPlainText()
             templateserver.update_stylesheet(model, model['css'])
         
         def on_close():

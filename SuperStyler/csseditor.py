@@ -85,6 +85,9 @@ class CSSEditor(QsciScintilla):
             self.markerAdd(nline, self.ARROW_MARKER_NUM)
 
 
+    def toPlainText(self):
+        return self.text()
+    
 if __name__ == "__main__":
     testcss = u"""
 body
