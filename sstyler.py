@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Version: 1.4
+# Version: 1.5
 # See github page for more information:
 # https://github.com/ntsp/SuperStyler
 
