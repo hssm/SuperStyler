@@ -18,34 +18,34 @@ Template editing is not (yet!) supported. CSS only. Tested on AnkiDroid, AnkiWeb
 ### Prepare
 Your collection needs to be prepared before using SuperStyler. This is done to avoid having to do a full sync every time you use SuperStyler. SuperStyler needs to create its own card types to ensure it doesn't mess up your real data, but Anki needs to do a full sync any time you add a new card type. It would be very inconvenient to have to full-sync every time you needed to use SuperStyler. Thus, preparing your collection will create empty card types in all of your note types, so you only do a full sync once. These card types will have empty templates, so no new cards are generated. **Do not edit those templates yourself in the card editor** (see [Cleanup](#cleanup)). If you create a new note type, the prepare screen will prompt you to prepare again (because the new note type doesn't have the special card type yet).
 
-![Prepare](https://raw.github.com/ntsp/SuperStyler/master/docs/image/prepare.png "Prepare collection")  
+![Prepare](https://raw.github.com/hssm/SuperStyler/master/docs/image/prepare.png "Prepare collection")  
 
 ### Main screen
 The main screen lists your notes and all of their card types. You are shown notes instead of decks since the notes are the objects that contain the stylesheets. Editing a note's stylesheet affects all cards.
 
-![Main](https://raw.github.com/ntsp/SuperStyler/master/docs/image/mainscreen.png "Main screen")  
+![Main](https://raw.github.com/hssm/SuperStyler/master/docs/image/mainscreen.png "Main screen")  
 
 To begin editing, decide which card type to use as your base template and click the "Start" link next to it. The card's template will be copied over to the SuperStyler card (so your original is untouched) and a server is opened in the background. 
 
 ### Port
 Since SuperStyler opens a server to host your stylesheet, you will need inbound access to your machine, which a firewall will block. On Windows, you will be asked to give permission to Anki to allow it to communicate over the network. Stick to the defaults and click the "Allow access" button to proceed.
 
-![Firewall](https://raw.github.com/ntsp/SuperStyler/master/docs/image/firewall.png "Windows firewall warning")  
+![Firewall](https://raw.github.com/hssm/SuperStyler/master/docs/image/firewall.png "Windows firewall warning")  
 
 If you prefer to manually set the port, you must edit the main file that loads the plugin (sstyler.py). You can do this from within Anki. From the menu bar, click on **Tools -> Add-ons -> sstyler -> Edit...** and follow the instructions there. You must restart Anki to use the new port.
 
 ### Ready to edit
-![Opened](https://raw.github.com/ntsp/SuperStyler/master/docs/image/open.png "SuperStyler server open")  
+![Opened](https://raw.github.com/hssm/SuperStyler/master/docs/image/open.png "SuperStyler server open")  
 
 The main window shows you a warning that you must follow. SuperStyler creates brand new cards to freely modify for itself. These cards are in your collection and look identical to the base template you copied, so it's hard to tell them apart. If not removed, these cards may appear in your normal reviews as new cards. You *must* make use of the "[clear]" link shown on the SuperStyler main screen to remove any junk related to SuperStyler before reviewing normally again.
 
 Click on the "[Open]" link to open the editor.
 
-![Editor](https://raw.github.com/ntsp/SuperStyler/master/docs/image/editor.png "SuperStyler editor")  
+![Editor](https://raw.github.com/hssm/SuperStyler/master/docs/image/editor.png "SuperStyler editor")  
 
 At this point, there will also be a new dynamic deck which contains the new SuperStyler cards that grab the stylesheet from the SuperStyler server.
 
-![Dyn](https://raw.github.com/ntsp/SuperStyler/master/docs/image/dyndeck.png "SuperStyler dynamic deck")  
+![Dyn](https://raw.github.com/hssm/SuperStyler/master/docs/image/dyndeck.png "SuperStyler dynamic deck")  
 
 This is the deck you must open to preview stylesheet changes when editing. The name of the dynamic deck will contain the note type's name at the end. This deck can be opened on any device to view changes as you make them. Of course, you need to synchronize your collection to make this deck available elsewhere. 
 
