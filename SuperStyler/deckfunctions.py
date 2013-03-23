@@ -64,7 +64,7 @@ def get_ss_dyndeck(model):
     """SuperStyler dyndeck if one exists for the model, or None if not."""
     
     for deck in mw.col.decks.all():
-        m = re.match(PREFIX+"-(.+)-(.+)", deck['name'])
+        m = re.match(PREFIX+"-(.+?)-(.+)", deck['name'])
         if m is not None:
             model_id = m.group(1)
             model_name = m.group(2)
