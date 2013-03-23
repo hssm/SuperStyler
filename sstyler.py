@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-# Version: 1.5
+# Version: 1.6
 # See github page for more information:
-# https://github.com/ntsp/SuperStyler
+# https://github.com/hssm/SuperStyler
 
 import SuperStyler.menu
 
